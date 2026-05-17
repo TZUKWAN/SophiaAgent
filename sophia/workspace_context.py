@@ -13,7 +13,17 @@ TABULAR_SUFFIXES = {".csv"}
 DOCX_SUFFIXES = {".docx"}
 PDF_SUFFIXES = {".pdf"}
 SUPPORTED_SUFFIXES = TEXT_SUFFIXES | TABULAR_SUFFIXES | DOCX_SUFFIXES | PDF_SUFFIXES
-IGNORE_DIRS = {".git", ".venv", "venv", "__pycache__", ".pytest_cache", ".ruff_cache", "node_modules"}
+IGNORE_DIRS = {
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    "node_modules",
+}
+DEFAULT_PROMPT_BUDGET_CHARS = 90_000
+DEFAULT_EXCERPT_CHARS = 2_200
 
 
 @dataclass
@@ -36,26 +46,64 @@ class WorkspaceContext:
     def has_evidence(self) -> bool:
         return bool(self.evidences)
 
-    def to_prompt_block(self) -> str:
+    def to_prompt_block(
+        self,
+        *,
+        user_message: str = "",
+        max_chars: int = DEFAULT_PROMPT_BUDGET_CHARS,
+        max_excerpt_chars: int = DEFAULT_EXCERPT_CHARS,
+    ) -> str:
         if not self.requested:
             return ""
+
         lines = [
-            "【Sophia 自动工作空间预读结果】",
-            "用户要求基于工作空间材料回答。下面内容来自本机工作空间文件，不是网络检索结果。",
-            "必须只基于这些已读取材料和后续真实工具结果写作；不得编造作者、年份、DOI、期刊或统计数字。",
-            "如果材料不足以支撑某个结论或参考文献，请明确说明不足，不要补造。",
+            "[Sophia workspace pre-read result]",
+            "The user asked Sophia to answer based on workspace materials. The following materials are local workspace files, not web search results.",
+            "All supported files were scanned and read when possible. File count is not limited.",
+            "To stay within the model context window, Sophia injects the complete file manifest plus bounded relevant excerpts instead of dumping every full document into every request.",
+            "Use these workspace materials and later real tool results as evidence. Do not fabricate authors, years, DOI values, journals, page numbers, or statistics.",
+            "If the workspace excerpts are insufficient for a conclusion or citation, state the gap explicitly instead of inventing evidence.",
         ]
+
         if not self.evidences:
-            lines.append("未读取到可用论文/文献文本。")
+            lines.append("No usable workspace paper or literature text was read.")
         else:
-            lines.append(f"已读取 {len(self.evidences)} 个文件：")
+            lines.append(f"Read {len(self.evidences)} workspace files.")
+            lines.append("\n[Workspace file manifest]")
             for idx, item in enumerate(self.evidences, 1):
-                lines.append(f"\n[材料 {idx}] {item.path} ({item.kind}, {item.chars} chars)")
+                warning = f"; warning={item.warning}" if item.warning else ""
+                lines.append(f"{idx}. {item.path} ({item.kind}, {item.chars} chars{warning})")
+
+            lines.append("\n[Relevant workspace excerpts]")
+            used = len("\n".join(lines))
+            omitted = 0
+            for idx, item in enumerate(self.evidences, 1):
+                header = f"\n[Material {idx}] {item.path} ({item.kind}, {item.chars} chars)"
+                excerpt_budget = min(
+                    max_excerpt_chars,
+                    max(0, max_chars - used - len(header) - 200),
+                )
+                if excerpt_budget <= 200:
+                    omitted += 1
+                    continue
+                excerpt = _select_excerpt(item.content, user_message, excerpt_budget)
+                block = [header]
                 if item.warning:
-                    lines.append(f"读取提示：{item.warning}")
-                lines.append(item.content)
+                    block.append(f"Read note: {item.warning}")
+                block.append(excerpt)
+                block_text = "\n".join(block)
+                if used + len(block_text) > max_chars:
+                    omitted += 1
+                    continue
+                lines.append(block_text)
+                used += len(block_text)
+            if omitted:
+                lines.append(
+                    f"\n[Context budget note] {omitted} read files are included in the manifest but not embedded as excerpts in this model request."
+                )
+
         if self.skipped:
-            lines.append("\n未读取或跳过的文件：")
+            lines.append("\n[Skipped or unread files]")
             lines.extend(f"- {entry}" for entry in self.skipped[:20])
             if len(self.skipped) > 20:
                 lines.append(f"- ... {len(self.skipped) - 20} more skipped files")
@@ -64,15 +112,31 @@ class WorkspaceContext:
 
 def needs_workspace_context(user_message: str) -> bool:
     text = user_message.lower()
-    workspace_terms = ["工作空间", "workspace", "本地", "当前目录", "目录中", "文件中"]
-    source_terms = ["论文", "文献", "资料", "材料", "参考文献", "文件", "仔细阅读", "基于"]
+    workspace_terms = [
+        "工作空间",
+        "workspace",
+        "本地",
+        "当前目录",
+        "目录中",
+        "文件中",
+    ]
+    source_terms = [
+        "论文",
+        "文献",
+        "资料",
+        "材料",
+        "参考文献",
+        "文件",
+        "仔细阅读",
+        "基于",
+    ]
     return any(term in text for term in workspace_terms) and any(term in text for term in source_terms)
 
 
 def asks_for_paper_document(user_message: str) -> bool:
     text = user_message.lower()
-    return any(term in text for term in ["写", "生成", "撰写", "成文"]) and any(
-        term in text for term in ["论文", "文章", "paper", "文稿"]
+    return any(term in text for term in ["写", "生成", "撰写", "成文", "write", "draft"]) and any(
+        term in text for term in ["论文", "文章", "paper", "article", "文稿"]
     )
 
 
@@ -186,7 +250,15 @@ def _rank_file(path: Path, user_message: str) -> tuple:
     name = path.name.lower()
     text = user_message.lower()
     score = 0
-    for token in ["生成式", "人工智能", "中华文化", "国际传播", "文化传播", "ai", "文化"]:
+    for token in [
+        "生成式",
+        "人工智能",
+        "中华文化",
+        "国际传播",
+        "文化传播",
+        "ai",
+        "文化",
+    ]:
         if token.lower() in text and token.lower() in name:
             score -= 5
     if path.suffix.lower() in {".pdf", ".docx"}:
@@ -248,6 +320,62 @@ def _read_pdf(path: Path) -> tuple[str, str]:
     return "\n".join(parts), warning
 
 
+def _select_excerpt(text: str, query: str, max_chars: int) -> str:
+    if len(text) <= max_chars:
+        return text
+
+    tokens = _query_tokens(query)
+    if not tokens:
+        return text[:max_chars] + f"\n...[excerpted from {len(text)} chars]"
+
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+    if not paragraphs:
+        return text[:max_chars] + f"\n...[excerpted from {len(text)} chars]"
+
+    scored = []
+    for index, paragraph in enumerate(paragraphs):
+        lower = paragraph.lower()
+        score = sum(1 for token in tokens if token in lower)
+        if score:
+            scored.append((score, -index, paragraph))
+    selected = [item[2] for item in sorted(scored, reverse=True)]
+    if not selected:
+        selected = paragraphs
+
+    chunks: List[str] = []
+    used = 0
+    for paragraph in selected:
+        if used >= max_chars:
+            break
+        remaining = max_chars - used
+        piece = paragraph[:remaining]
+        chunks.append(piece)
+        used += len(piece) + 2
+    return "\n\n".join(chunks).strip() + f"\n...[excerpted from {len(text)} chars]"
+
+
+def _query_tokens(query: str) -> List[str]:
+    lowered = query.lower()
+    latin = re.findall(r"[a-zA-Z][a-zA-Z0-9_\-]{2,}", lowered)
+    chinese_terms = [
+        term
+        for term in [
+            "生成式人工智能",
+            "人工智能",
+            "中华文化",
+            "国际传播",
+            "文化传播",
+            "机遇",
+            "挑战",
+            "路径",
+            "论文",
+            "文献",
+        ]
+        if term in query
+    ]
+    return list(dict.fromkeys(latin + chinese_terms))
+
+
 def _clean_text(text: str) -> str:
     text = text.replace("\x00", "")
     return re.sub(r"\n{3,}", "\n\n", text).strip()
@@ -261,10 +389,10 @@ def _rel(path: Path, root: Path) -> str:
 
 
 def _extract_title(text: str) -> str:
-    quoted = re.search(r"《([^》]{4,80})》", text)
+    quoted = re.search(r"《([^《》]{4,80})》", text)
     if quoted:
         return quoted.group(1)
-    match = re.search(r"([\u4e00-\u9fffA-Za-z0-9，、：:（）()\s]{8,80})这个论文", text)
+    match = re.search(r"([\u4e00-\u9fffA-Za-z0-9，、：（）()\s]{8,80})这个论文", text)
     if match:
         return match.group(1).strip(" ，、：:")
     first_heading = re.search(r"^#\s+(.+)$", text, flags=re.MULTILINE)

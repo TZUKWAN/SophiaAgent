@@ -429,7 +429,7 @@ class SophiaAgent:
         )
 
     def _inject_workspace_context(self, user_message: str, workspace_context) -> str:
-        block = workspace_context.to_prompt_block()
+        block = workspace_context.to_prompt_block(user_message=user_message)
         paper_contract = build_paper_generation_contract(user_message)
         reference_notice = build_reference_priority_notice(
             user_message,
@@ -493,7 +493,7 @@ class SophiaAgent:
                     )
                     return self._append_generated_document_path(user_message, final_text)
                 except Exception as exc:
-                    logger.exception("Swarm execution failed; falling back to single-agent run: %s", exc)
+                    logger.warning("Swarm execution failed; falling back to single-agent run: %s", exc)
 
         messages: List[Dict[str, Any]] = [
             {"role": "system", "content": system_prompt}
@@ -627,7 +627,7 @@ class SophiaAgent:
                     }
                     return
                 except Exception as exc:
-                    logger.exception("Swarm stream failed; falling back to single-agent stream: %s", exc)
+                    logger.warning("Swarm stream failed; falling back to single-agent stream: %s", exc)
                     yield {
                         "type": "swarm_error",
                         "error": "Swarm failed and Sophia is continuing with the main agent.",

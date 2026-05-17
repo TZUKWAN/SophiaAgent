@@ -381,7 +381,7 @@ class SwarmOrchestrator:
                 },
             )
         except Exception as exc:
-            logger.exception("Swarm agent failed: %s", spec.agent_id)
+            logger.warning("Swarm agent failed: %s (%s)", spec.agent_id, exc)
             result.status = "failed"
             result.error = str(exc)
             result.end_time = datetime.now()

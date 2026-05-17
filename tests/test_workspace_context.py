@@ -48,6 +48,25 @@ def test_collect_workspace_context_reads_all_supported_files(tmp_path):
     assert context.skipped == []
 
 
+def test_prompt_block_uses_manifest_and_bounded_excerpts(tmp_path):
+    for idx in range(30):
+        paper = tmp_path / f"paper_{idx:02d}.md"
+        paper.write_text(
+            "生成式人工智能 中华文化 国际传播\n" + ("正文内容。" * 2000),
+            encoding="utf-8",
+        )
+
+    context = collect_workspace_context(str(tmp_path), "基于工作空间中的论文写一篇文章")
+    block = context.to_prompt_block(user_message="生成式人工智能语境下中华文化国际传播", max_chars=20_000)
+
+    assert len(context.evidences) == 30
+    assert "paper_29.md" in block
+    assert "[Workspace file manifest]" in block
+    assert "[Relevant workspace excerpts]" in block
+    assert len(block) < 30_000
+    assert "not embedded as excerpts" in block
+
+
 def test_workspace_context_streams_per_file_events(tmp_path):
     for idx in range(3):
         paper = tmp_path / f"paper_{idx:02d}.md"
