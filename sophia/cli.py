@@ -12,22 +12,20 @@ import sys
 import time
 from typing import Any, Dict, List, Optional
 
+from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import WordCompleter
+from rich import box
 from rich.console import Console
 from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from rich import box
 
-from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import WordCompleter
-
-from sophia.config import Config
 from sophia.agent import SophiaAgent
+from sophia.config import Config
 from sophia.lifecycle import install_process_lifecycle_hooks
 from sophia.session import SessionManager
-
 
 # ── Theme ───────────────────────────────────────────────────────
 
@@ -468,6 +466,7 @@ class SlashCommandManager:
             "/checkpoints": {"desc": "List checkpoints", "handler": self._cmd_checkpoints},
             "/tools": {"desc": "List tools", "handler": self._cmd_tools},
             "/model": {"desc": "Show model", "handler": self._cmd_model},
+            "/goal": {"desc": "Run an autonomous goal", "handler": self._cmd_goal},
             "/clear": {"desc": "Clear screen", "handler": self._cmd_clear},
             "/quit": {"desc": "Exit", "handler": None},
             "/exit": {"desc": "Exit", "handler": None},
@@ -614,6 +613,19 @@ class SlashCommandManager:
         self.console.print(Text(f"  {agent.config.model.name}", style=SophiaTheme.BRAND))
         self.console.print(Text(f"  Provider: {agent.config.model.provider}", style="dim"))
 
+    def _cmd_goal(self, args, ctx):
+        task = args.strip()
+        if not task:
+            self.console.print(Text("  Usage: /goal <task>", style="dim"))
+            return
+        ctx["slash_passthrough"] = (
+            "Autonomous goal mode:\n"
+            f"{task}\n\n"
+            "Plan, execute, verify, repair quality gaps, and deliver the requested final "
+            "format. "
+            "Do not stop after creating a plan or ask the user to finish routine work."
+        )
+
     def _cmd_clear(self, args, ctx):
         self.console.clear()
 
@@ -728,7 +740,10 @@ def cmd_chat(args):
                 ctx.get("session_id"),
             )
             status_bar.render()
-            continue
+            if ctx.get("slash_passthrough"):
+                user_input = ctx.pop("slash_passthrough")
+            else:
+                continue
 
         # Create session on first message
         if not ctx["session_id"]:
@@ -1087,6 +1102,7 @@ def cmd_web(args):
     """Start SophiaAgent web UI server."""
     install_process_lifecycle_hooks()
     import uvicorn
+
     from sophia.web import create_app
     config = Config.load(args.config, workspace=args.workspace)
     app = create_app(config)
@@ -1117,6 +1133,7 @@ def cmd_web(args):
 def _serve_http(args):
     install_process_lifecycle_hooks()
     import uvicorn
+
     from sophia.web import create_app
     config = Config.load(args.config, workspace=args.workspace)
     app = create_app(config)
