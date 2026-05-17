@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "sophia": {
+      "type": "stdio",
+      "command": "python",
+      "args": [
+        "-m",
+        "sophia",
+        "serve",
+        "--stdio"
+      ]
+    }
+  }
+}

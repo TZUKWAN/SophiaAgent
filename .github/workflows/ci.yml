@@ -21,6 +21,7 @@ jobs:
           ruff check
           sophia/swarm
           sophia/lifecycle.py
+          sophia/integrations.py
           tests/test_swarm_agent_integration.py
           tests/test_swarm_analyzer.py
           tests/test_swarm_bus.py
@@ -34,6 +35,8 @@ jobs:
           tests/test_swarm_synthesizer.py
           tests/test_swarm_tool_whitelist.py
           tests/test_lifecycle.py
+          tests/test_integrations.py
+          tests/test_mcp_integration.py
           --select E,F,W
           --ignore E501,E731
 

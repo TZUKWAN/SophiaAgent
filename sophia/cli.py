@@ -702,6 +702,106 @@ def _create_agent(config_path=None, model=None) -> SophiaAgent:
     return SophiaAgent(config)
 
 
+MCP_SOPHIA_ASK_TOOL = {
+    "name": "sophia_ask",
+    "description": (
+        "Delegate a natural-language research, writing, review, data analysis, "
+        "or workflow request to SophiaAgent. SophiaAgent will decide whether "
+        "to run its automatic swarm internally and return one final answer."
+    ),
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "prompt": {
+                "type": "string",
+                "description": "The user's full request for SophiaAgent.",
+            }
+        },
+        "required": ["prompt"],
+    },
+}
+
+
+def _mcp_tools_for_agent(agent: SophiaAgent) -> List[Dict[str, Any]]:
+    """Return MCP-compatible tools, including the natural-language Sophia entrypoint."""
+    tools = [MCP_SOPHIA_ASK_TOOL]
+    for schema in agent.tools.get_schemas():
+        fn = schema["function"]
+        if fn["name"] == MCP_SOPHIA_ASK_TOOL["name"]:
+            continue
+        tools.append({
+            "name": fn["name"],
+            "description": fn["description"],
+            "inputSchema": fn["parameters"],
+        })
+    return tools
+
+
+def _call_mcp_tool(agent: SophiaAgent, name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    if name == MCP_SOPHIA_ASK_TOOL["name"]:
+        prompt = str(arguments.get("prompt", "")).strip()
+        if not prompt:
+            return {"error": "sophia_ask requires a non-empty prompt"}
+        return {"response": agent.run(prompt), "tool": name}
+
+    result_str = agent.tools.dispatch(name, arguments)
+    try:
+        return json.loads(result_str)
+    except json.JSONDecodeError:
+        return {"text": result_str}
+
+
+def _mcp_prompts_list() -> List[Dict[str, Any]]:
+    return [
+        {
+            "name": "sophia",
+            "description": "Delegate a request to SophiaAgent",
+            "arguments": [
+                {"name": "request", "description": "Request for SophiaAgent", "required": True}
+            ],
+        },
+        {
+            "name": "research",
+            "description": "Run a SophiaAgent research workflow",
+            "arguments": [{"name": "topic", "description": "Research topic", "required": True}],
+        },
+        {
+            "name": "paper",
+            "description": "Create an academic paper with SophiaAgent",
+            "arguments": [
+                {"name": "title", "description": "Paper title", "required": True},
+                {"name": "type", "description": "Document type", "required": False},
+            ],
+        },
+    ]
+
+
+def _mcp_prompt_messages(name: str, arguments: Dict[str, Any]) -> List[Dict[str, str]]:
+    if name == "sophia":
+        request = arguments.get("request", "")
+        content = (
+            "Use the SophiaAgent MCP tool `sophia_ask` to handle this request "
+            f"end-to-end, and return SophiaAgent's final answer:\n\n{request}"
+        )
+    elif name == "research":
+        topic = arguments.get("topic", "")
+        content = (
+            "Use the SophiaAgent MCP tool `sophia_ask` to research this topic, "
+            f"collect credible sources, synthesize findings, and cite limitations:\n\n{topic}"
+        )
+    elif name == "paper":
+        title = arguments.get("title", "")
+        doc_type = arguments.get("type", "paper")
+        content = (
+            "Use the SophiaAgent MCP tool `sophia_ask` to create a "
+            f"{doc_type} titled `{title}` with outline, argument structure, "
+            "and academically appropriate prose."
+        )
+    else:
+        return []
+    return [{"role": "user", "content": content}]
+
+
 # ── Exec Command ────────────────────────────────────────────────
 
 def cmd_exec(args):
@@ -825,6 +925,33 @@ def cmd_serve(args):
         _serve_http(args)
 
 
+def cmd_integrate(args):
+    """Install SophiaAgent integrations for local coding agents."""
+    from sophia.integrations import install_all, install_claude_code, install_codex
+
+    if args.target == "claude":
+        results = [install_claude_code(force=args.force)]
+    elif args.target == "codex":
+        results = [install_codex(force=args.force)]
+    else:
+        results = install_all(force=args.force)
+
+    exit_code = 0
+    for result in results:
+        status = "installed" if result.installed else "skipped"
+        detected = "detected" if result.detected else "not detected"
+        print(f"{result.client}: {status} ({detected})")
+        for path in result.paths:
+            print(f"  wrote: {path}")
+        for message in result.messages:
+            print(f"  {message}")
+        for error in result.errors:
+            print(f"  error: {error}", file=sys.stderr)
+            exit_code = 1
+    if exit_code:
+        sys.exit(exit_code)
+
+
 def cmd_web(args):
     """Start SophiaAgent web UI server."""
     install_process_lifecycle_hooks()
@@ -839,7 +966,7 @@ def cmd_web(args):
     body = Text()
     body.append("SophiaAgent Web", style=f"bold {SophiaTheme.BRAND}")
     body.append("\n")
-    body.append(f"  Model: ", style="dim")
+    body.append("  Model: ", style="dim")
     body.append(config.model.name, style=SophiaTheme.BRAND)
     body.append("\n")
     body.append(f"  Workspace: {config.session.workspace}", style="dim")
@@ -899,26 +1026,12 @@ def _serve_stdio(args):
         }
 
     def _handle_tools_list(params):
-        schemas = agent.tools.get_schemas()
-        return {
-            "tools": [
-                {
-                    "name": s["function"]["name"],
-                    "description": s["function"]["description"],
-                    "inputSchema": s["function"]["parameters"],
-                }
-                for s in schemas
-            ]
-        }
+        return {"tools": _mcp_tools_for_agent(agent)}
 
     def _handle_tools_call(params):
         name = params.get("name", "")
         arguments = params.get("arguments", {})
-        result_str = agent.tools.dispatch(name, arguments)
-        try:
-            result_data = json.loads(result_str)
-        except json.JSONDecodeError:
-            result_data = {"text": result_str}
+        result_data = _call_mcp_tool(agent, name, arguments)
         return {
             "content": [{"type": "text", "text": json.dumps(result_data, ensure_ascii=False)}],
             "isError": "error" in result_data if isinstance(result_data, dict) else False,
@@ -941,40 +1054,23 @@ def _serve_stdio(args):
                 "model": agent.config.model.name,
                 "provider": agent.config.model.provider,
                 "workspace": agent.workspace,
-                "tools": agent.tools.list_tools(),
+                "tools": [tool["name"] for tool in _mcp_tools_for_agent(agent)],
             }, ensure_ascii=False, indent=2)
         elif uri == "sophia://tools":
             content = json.dumps({
-                "tools": [s["function"] for s in agent.tools.get_schemas()]
+                "tools": _mcp_tools_for_agent(agent)
             }, ensure_ascii=False, indent=2)
         else:
             return {"contents": []}
         return {"contents": [{"uri": uri, "mimeType": "application/json", "text": content}]}
 
     def _handle_prompts_list(params):
-        return {
-            "prompts": [
-                {"name": "research", "description": "Research workflow",
-                 "arguments": [{"name": "topic", "description": "Topic", "required": True}]},
-                {"name": "paper", "description": "Write paper",
-                 "arguments": [
-                     {"name": "title", "description": "Title", "required": True},
-                     {"name": "type", "description": "Type", "required": False},
-                 ]},
-            ]
-        }
+        return {"prompts": _mcp_prompts_list()}
 
     def _handle_prompts_get(params):
         name = params.get("name", "")
         a = params.get("arguments", {})
-        if name == "research":
-            msgs = [{"role": "user",
-                     "content": f"检索关于{a.get('topic', '')}的研究文献，生成综述。"}]
-        elif name == "paper":
-            msgs = [{"role": "user",
-                     "content": f"创建{a.get('type', 'paper')}文档，标题'{a.get('title', '')}'。"}]
-        else:
-            msgs = []
+        msgs = _mcp_prompt_messages(name, a)
         return {"description": f"Prompt: {name}", "messages": msgs}
 
     METHOD_HANDLERS = {
@@ -1052,6 +1148,28 @@ def main():
     p_serve.add_argument("--host", default="0.0.0.0")
     p_serve.add_argument("--stdio", action="store_true")
     p_serve.set_defaults(func=cmd_serve)
+
+    p_integrate = subparsers.add_parser(
+        "integrate",
+        help="Auto-register SophiaAgent with Claude Code and Codex",
+    )
+    p_integrate.add_argument(
+        "--target",
+        choices=["auto", "claude", "codex"],
+        default="auto",
+        help="Client integration to install",
+    )
+    p_integrate.add_argument(
+        "--force",
+        action="store_true",
+        help="Write integration files even if the client command is not detected",
+    )
+    p_integrate.add_argument(
+        "--auto",
+        action="store_true",
+        help="Alias for the default automatic detection mode",
+    )
+    p_integrate.set_defaults(func=cmd_integrate)
 
     p_web = subparsers.add_parser("web", help="Start web UI")
     p_web.add_argument("--port", type=int, default=8080)

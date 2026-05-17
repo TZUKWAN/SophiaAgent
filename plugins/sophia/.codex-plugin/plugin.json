@@ -1,0 +1,41 @@
+{
+  "name": "sophia",
+  "version": "0.1.0",
+  "description": "SophiaAgent MCP integration for research, writing, review, and swarm workflows.",
+  "author": {
+    "name": "SophiaAgent",
+    "url": "https://github.com/TZUKWAN/SophiaAgent"
+  },
+  "homepage": "https://github.com/TZUKWAN/SophiaAgent",
+  "repository": "https://github.com/TZUKWAN/SophiaAgent",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "research",
+    "writing",
+    "swarm",
+    "academic"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "SophiaAgent",
+    "shortDescription": "Academic research and writing swarm assistant.",
+    "longDescription": "SophiaAgent exposes a local MCP server so Codex can delegate research, academic writing, review, citation, data-analysis, and automatic swarm workflows.",
+    "developerName": "SophiaAgent",
+    "category": "Productivity",
+    "capabilities": [
+      "MCP",
+      "Research",
+      "Writing",
+      "Automation"
+    ],
+    "websiteURL": "https://github.com/TZUKWAN/SophiaAgent",
+    "defaultPrompt": [
+      "Use SophiaAgent to review this paper.",
+      "Use SophiaAgent to research this topic.",
+      "Use SophiaAgent to draft a literature review."
+    ],
+    "brandColor": "#B45309"
+  }
+}

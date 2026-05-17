@@ -1,0 +1,20 @@
+{
+  "name": "sophia-local",
+  "interface": {
+    "displayName": "SophiaAgent Local Plugins"
+  },
+  "plugins": [
+    {
+      "name": "sophia",
+      "source": {
+        "source": "local",
+        "path": "./plugins/sophia"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

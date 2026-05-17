@@ -171,6 +171,7 @@ sophia chat      Interactive terminal session
 sophia exec      Single-shot prompt execution
 sophia tools     List or call tools
 sophia serve     Start server mode
+sophia integrate Auto-register with Claude Code and Codex
 sophia web       Start the web UI
 ```
 
@@ -181,8 +182,48 @@ sophia chat --model gpt-4o
 sophia chat --session SESSION_ID
 sophia exec --json "分析这个研究问题适合什么方法"
 sophia tools list --json
+sophia integrate --auto
 sophia web --host 127.0.0.1 --port 8080
 ```
+
+## Codex and Claude Code Integration
+
+SophiaAgent can be registered as a local MCP server for Codex and Claude Code.
+After installation on any computer, run:
+
+```bash
+sophia integrate --auto
+```
+
+The command detects whether `claude` and/or `codex` are installed on `PATH`.
+When Claude Code is detected, SophiaAgent registers a user-scope MCP server and
+writes:
+
+- `~/.claude/commands/sophia.md` for `/sophia ...`
+- `~/.claude/skills/sophia/SKILL.md` so Claude Code can choose SophiaAgent for suitable tasks
+
+When Codex is detected, SophiaAgent writes a local Codex plugin with MCP and skill
+metadata under `~/.agents/plugins/`, and updates the local plugin marketplace.
+
+Force writing integration files even when a client command is not currently on
+`PATH`:
+
+```bash
+sophia integrate --target claude --force
+sophia integrate --target codex --force
+```
+
+Project-level integration files are also included in this repository:
+
+- `.mcp.json` exposes the `sophia` MCP server.
+- `.claude/commands/sophia.md` provides `/sophia`.
+- `.claude/skills/sophia/SKILL.md` describes when Claude Code should call SophiaAgent.
+- `plugins/sophia/` contains the Codex plugin manifest, MCP config, and skill.
+- `.agents/plugins/marketplace.json` advertises the repo-local Codex plugin.
+
+The MCP server exposes all Sophia tools plus a unified `sophia_ask` tool. External
+agents should call `sophia_ask` with the full user request; SophiaAgent then
+decides internally whether to run normally or launch its automatic swarm.
 
 ### Slash Commands in Chat
 
