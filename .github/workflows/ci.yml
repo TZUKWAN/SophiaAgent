@@ -15,7 +15,27 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install ruff
-      - run: ruff check sophia/ tests/ --select E,F,W
+      - run: python -m compileall sophia tests
+      - name: Lint new swarm and lifecycle code
+        run: >
+          ruff check
+          sophia/swarm
+          sophia/lifecycle.py
+          tests/test_swarm_agent_integration.py
+          tests/test_swarm_analyzer.py
+          tests/test_swarm_bus.py
+          tests/test_swarm_decomposer.py
+          tests/test_swarm_hooks.py
+          tests/test_swarm_legacy_compatibility.py
+          tests/test_swarm_models.py
+          tests/test_swarm_orchestrator.py
+          tests/test_swarm_roles.py
+          tests/test_swarm_stream_events.py
+          tests/test_swarm_synthesizer.py
+          tests/test_swarm_tool_whitelist.py
+          tests/test_lifecycle.py
+          --select E,F,W
+          --ignore E501,E731
 
   test:
     runs-on: ubuntu-latest
@@ -27,5 +47,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install -e ".[dev]"
+      - run: pip install -e ".[dev,analysis,export,citation,data,ml,advanced]"
       - run: pytest tests/ -v

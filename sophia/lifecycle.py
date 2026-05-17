@@ -16,7 +16,6 @@ import atexit
 import os
 import signal
 import subprocess
-import sys
 import threading
 import time
 from typing import Iterable, Set
