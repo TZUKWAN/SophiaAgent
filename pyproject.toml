@@ -45,6 +45,7 @@ ml = [
 advanced = [
     "pingouin>=0.5",
     "linearmodels>=5.0",
+    "pyDOE3>=1.0",
     "factor_analyzer>=0.5",
     "networkx>=3.0",
     "flaml>=2.0",
