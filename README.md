@@ -20,6 +20,9 @@ and final synthesis.
 - **Tool Whitelisting**: each sub-agent only sees the tools assigned to its role.
 - **Academic Research Tools**: statistics, causal inference, survey analysis, qualitative coding,
   meta-analysis, machine learning, visualization, and method discovery.
+- **Empirical Workflow Orchestrator**: applied-economics, epidemiology/public-health, and
+  ML-causal workflows now start from a single auditable 8-step plan, then run available stages on
+  real workspace data with ResultStore lineage and explicit missing-input warnings.
 - **Writing and Export**: create papers, reports, monographs, grant templates, Markdown, LaTeX,
   PDF, and DOCX outputs.
 - **Citation Management**: BibTeX-like reference storage, formatting, relation tracking, and
@@ -70,8 +73,29 @@ pip install -e ".[all]"
 Developer install:
 
 ```bash
-pip install -e ".[dev,analysis,export,citation,data,ml,advanced]"
+pip install -e ".[dev,analysis,export,citation,data,ml,advanced,empirical]"
 ```
+
+Optional empirical-method extras:
+
+```bash
+pip install -e ".[empirical]"
+```
+
+The built-in empirical workflow works without those optional packages. The extra adds richer
+classical econometrics/reporting libraries such as `statsmodels`, `linearmodels`, `pyfixest`,
+`stargazer`, `tableone`, and `lifelines` where the local Python environment supports them.
+
+For heavier causal-inference stacks:
+
+```bash
+pip install -e ".[empirical-full]"
+```
+
+That optional bundle adds RD, DML, causal forest, meta-learner, fairness, and conformal-causal
+libraries such as `rdrobust`, `rddensity`, `econml`, `causalml`, `doubleml`, `fairlearn`, and
+`mapie`. Sophia detects these packages at runtime and reports missing pieces through
+`empirical_capability_audit`.
 
 ## Configuration
 

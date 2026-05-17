@@ -62,6 +62,7 @@ from sophia.research.result_store import ResultStore
 from sophia.research.seed import GlobalSeed
 from sophia.research.advisor import MethodologyAdvisor
 from sophia.research.latex_exporter import LaTeXReporter
+from sophia.research.empirical_workflow import EmpiricalWorkflowEngine
 from sophia.research.register import register_method_tools
 
 # Self-evolving discovery system
@@ -170,6 +171,12 @@ class SophiaAgent:
         # Self-evolving discovery system
         self.method_catalog = MethodCatalog(config.session.db_path)
         self.advisor = MethodologyAdvisor(catalog=self.method_catalog)
+        self.empirical_workflow = EmpiricalWorkflowEngine(
+            self.workspace,
+            store=self.result_store,
+            pipeline=self.pipeline,
+            advisor=self.advisor,
+        )
         self.latex_reporter = LaTeXReporter(self.result_store)
         self.skill_factory.catalog = self.method_catalog
         self.dep_manager = DependencyManager()
@@ -226,6 +233,7 @@ class SophiaAgent:
             "visualization": self.viz_engine,
             "pipeline": self.pipeline,
             "advisor": self.advisor,
+            "empirical_workflow": self.empirical_workflow,
             "latex_reporter": self.latex_reporter,
         })
 

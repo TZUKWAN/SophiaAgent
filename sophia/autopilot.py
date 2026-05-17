@@ -6,9 +6,8 @@ Three layers:
 3. System Prompt    -- LLM-operating manual embedded in system prompt
 """
 
-import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +60,9 @@ class AutopilotRouter:
         if cls.is_research_intent(user_message):
             hints.append(
                 "[Autopilot] User is asking a research question. "
-                "Your workflow: (1) call methodology_advise to get method recommendations, "
-                "(2) call the recommended research tools in sequence, "
-                "(3) synthesize results with APA-style interpretation. "
+                "For empirical/quantitative/causal/data-analysis work, first call empirical_workflow_plan; "
+                "if real data and required variables are available, call empirical_workflow_run; "
+                "then use methodology_advise and the recommended specialized research tools to synthesize real results. "
                 "If the workflow repeats, consider creating a skill."
             )
 
@@ -227,8 +226,6 @@ class AutopilotOrchestrator:
 
     def register_hooks(self, hooks):
         """Register execution monitor hooks."""
-        from sophia.hooks import HookEvent
-
         hooks.register(
             "tool.post_dispatch",
             self.monitor.on_tool_post_dispatch,

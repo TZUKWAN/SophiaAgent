@@ -50,8 +50,27 @@ advanced = [
     "flaml>=2.0",
     "vaderSentiment>=3.3",
 ]
+empirical = [
+    "statsmodels>=0.14",
+    "linearmodels>=5.0",
+    "pyfixest>=0.28",
+    "stargazer>=0.0.7",
+    "missingno>=0.5",
+    "tableone>=0.9",
+    "lifelines>=0.28",
+]
+empirical-full = [
+    "sophia-agent[empirical]",
+    "rdrobust>=2.0",
+    "rddensity>=2.4",
+    "econml>=0.16",
+    "causalml>=0.16",
+    "doubleml>=0.9",
+    "fairlearn>=0.10",
+    "mapie>=0.9",
+]
 env = ["python-dotenv>=1.0"]
-all = ["sophia-agent[cli,web,analysis,export,citation,anthropic,data,ml,advanced,env]"]
+all = ["sophia-agent[cli,web,analysis,export,citation,anthropic,data,ml,advanced,empirical,env]"]
 core = ["sophia-agent[cli,web,citation,env]"]
 dev = ["pytest>=8.0", "ruff>=0.5"]
 

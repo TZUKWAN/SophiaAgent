@@ -75,6 +75,10 @@ def register_method_tools(registry: ToolRegistry, engines: dict):
     if pipeline:
         _register_pipeline_tools(registry, pipeline)
 
+    empirical_workflow = engines.get("empirical_workflow")
+    if empirical_workflow:
+        _register_empirical_workflow_tools(registry, empirical_workflow)
+
     advisor = engines.get("advisor")
     if advisor:
         _register_advisor_tools(registry, advisor)
@@ -82,6 +86,119 @@ def register_method_tools(registry: ToolRegistry, engines: dict):
     latex_reporter = engines.get("latex_reporter")
     if latex_reporter:
         _register_latex_tools(registry, latex_reporter)
+
+
+# =====================================================================
+# Empirical workflow orchestrator (3 tools)
+# =====================================================================
+
+def _register_empirical_workflow_tools(registry, engine):
+    def _capability_audit(args):
+        return engine.capability_audit(args)
+    registry.register(
+        "empirical_capability_audit",
+        "Audit Sophia's empirical-analysis capabilities, including built-in workflow stages and optional specialized econometrics/causal packages that are available or missing.",
+        {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+        _capability_audit,
+    )
+
+    workflow_properties = {
+        "research_question": {
+            "type": "string",
+            "description": "Research question or hypothesis. Required for a real empirical workflow.",
+        },
+        "data_path": {
+            "type": "string",
+            "description": "Dataset path relative to the workspace. CSV, Excel, and JSON are supported.",
+        },
+        "result_id": {
+            "type": "string",
+            "description": "Existing ResultStore dataframe id, alternative to data_path.",
+        },
+        "mode": {
+            "type": "string",
+            "enum": ["applied_econ", "econ", "epi", "ml_causal"],
+            "description": "Empirical mode. If omitted, Sophia infers applied economics, epidemiology/public health, or ML causal inference from the request.",
+        },
+        "design": {
+            "type": "string",
+            "enum": ["observational", "randomized", "quasi-experimental", "survey"],
+            "description": "Study design type.",
+        },
+        "outcome": {
+            "type": "string",
+            "description": "Outcome/dependent variable column.",
+        },
+        "treatment": {
+            "type": "string",
+            "description": "Treatment/exposure/key explanatory variable column.",
+        },
+        "unit": {
+            "type": "string",
+            "description": "Panel unit identifier column, if any.",
+        },
+        "time": {
+            "type": "string",
+            "description": "Time identifier column, if any.",
+        },
+        "covariates": {
+            "oneOf": [
+                {"type": "array", "items": {"type": "string"}},
+                {"type": "string"},
+            ],
+            "description": "Control variables for baseline/progressive specifications.",
+        },
+        "mediators": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Mediator variables for mechanism analysis.",
+        },
+        "subgroups": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Subgroup variables for heterogeneity analysis.",
+        },
+        "constraints": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Design constraints, missing inputs, or method exclusions.",
+        },
+        "outcome_type": {
+            "type": "string",
+            "enum": ["continuous", "binary", "count", "time", "text", "categorical"],
+            "description": "Outcome variable type for method recommendation.",
+        },
+    }
+
+    def _plan(args):
+        return engine.plan(args)
+    registry.register(
+        "empirical_workflow_plan",
+        "Create a full empirical-analysis workflow plan using Sophia's 8-step pipeline: pre-analysis plan, data contract, cleaning, Table 1, diagnostics, estimation, robustness, extensions, and reporting. Does not fabricate missing inputs.",
+        {
+            "type": "object",
+            "properties": workflow_properties,
+            "required": ["research_question"],
+        },
+        _plan,
+    )
+
+    def _run(args):
+        return engine.run(args)
+    registry.register(
+        "empirical_workflow_run",
+        "Run the available parts of Sophia's full empirical-analysis workflow on real workspace data. If required inputs are missing, returns a concrete blocked plan instead of fake analysis.",
+        {
+            "type": "object",
+            "properties": workflow_properties,
+            "required": ["research_question"],
+        },
+        _run,
+    )
 
 
 # =====================================================================
