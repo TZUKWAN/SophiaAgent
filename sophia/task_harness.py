@@ -117,16 +117,22 @@ def build_task_harness_prompt(
         "This is a controlled execution task. Do not answer with a loose draft.",
         "",
         "Mandatory execution loop:",
-        "1. Make a detailed step-by-step plan before substantive output.",
-        "2. For each step, decide the required tool or skill. If a tool can verify, read, "
+        "1. Decompose the task into atomic steps before substantive output. Each step must "
+        "have an action, required inputs, expected output, verification method, and done "
+        "condition. For complex tasks, prefer 10-30 small steps over a vague 3-step plan.",
+        "2. Execute exactly one step at a time. Do not mark a step complete until its done "
+        "condition has concrete evidence.",
+        "3. For each step, decide the required tool or skill. If a tool can verify, read, "
         "calculate, export, or inspect something, use the tool instead of guessing.",
-        "3. Execute steps one by one. Keep an evidence ledger linking each important "
+        "4. Keep an evidence ledger linking each important "
         "claim to workspace evidence, tool output, or an explicit limitation.",
-        "4. Run quality checks before finalizing. If a check fails, repair the output "
+        "5. Run quality checks before finalizing. If a check fails, repair the output "
         "and check again. Do not stop at a checklist of unresolved work.",
-        "5. Never fabricate data, citations, files, tool output, or completed actions.",
-        "6. Final output must include concrete deliverables or artifact paths when the "
+        "6. Never fabricate data, citations, files, tool output, or completed actions.",
+        "7. Final output must include concrete deliverables or artifact paths when the "
         "user asked for files.",
+        "8. Include a completion proof: completed steps, tools used, artifacts created, "
+        "quality gates passed, and any irreducible blocked items with reasons.",
         "",
         "Tool and skill policy:",
         "- Use `goal_create` for multi-step goals when available.",
@@ -136,6 +142,21 @@ def build_task_harness_prompt(
         "as a substitute for doing the current task.",
         "- If a tool fails, try the next reliable internal tool or fallback workflow and "
         "record the concrete failure. Do not ask the user to solve routine tool failure.",
+        "",
+        "Hook and loop policy:",
+        "- Treat agent, tool, swarm, goal, context, and loop hooks as the execution trace.",
+        "- Long, multi-stage, blocked, or recurring tasks must keep a goal/loop active until "
+        "the user's real requested deliverable is completed or a verified external blocker "
+        "is recorded.",
+        "- Do not report a task as completed because a plan exists. Completion requires "
+        "executed steps and verified outputs.",
+        "",
+        "Context continuity policy:",
+        "- Maintain a handoff packet while working: current objective, decomposition, "
+        "completed steps, pending steps, decisions, evidence ledger, tool results, "
+        "artifacts, failures, retries, quality gates, and next action.",
+        "- If the conversation is compressed or resumed in a new session, continue from "
+        "the handoff packet without asking the user to restate prior context.",
     ]
 
     if workspace_has_evidence:
@@ -155,6 +176,10 @@ def build_task_harness_prompt(
             "- If real data, outcome, treatment/key variables, and design inputs are available, "
             "run `empirical_workflow_run` and then use recommended specialized `research_*` "
             "tools for the design.",
+            "- Flexibly choose empirical modules from the actual design: descriptive/Table 1, "
+            "OLS/GLM, panel/fixed effects, DID, IV, RDD, PSM, SCM, mediation, moderation, "
+            "heterogeneity, sensitivity, ML, DML, causal forest, survey, qualitative, or "
+            "meta-analysis. Use only modules that match real inputs and assumptions.",
             "- If inputs are missing, produce a blocked-but-auditable empirical plan with exact "
             "missing inputs. Do not invent a sample, coefficient, p-value, standard error, "
             "table, or robustness result.",
@@ -162,8 +187,14 @@ def build_task_harness_prompt(
             "coding, sample construction, model assumptions, identification assumptions, "
             "baseline specification, robustness checks, sensitivity checks, and skipped-check "
             "reasons.",
+            "- Real analysis requires real data lineage: file path or result_id, row count, "
+            "column names, variable definitions, transformations, dropped rows, estimator, "
+            "standard errors, uncertainty, and reproducible artifact paths.",
             "- Report N, variable definitions, estimator, uncertainty, effect size, robustness "
             "status, and limitations whenever real estimation is executed.",
+            "- If the user asks for a paper, convert real empirical outputs into a real paper "
+            "with methods, results, tables, figures, credibility checks, limitations, and "
+            "the requested export format. Do not write an empirical paper from fake numbers.",
         ])
         if empirical_preflight:
             lines.extend([

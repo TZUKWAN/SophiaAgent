@@ -156,6 +156,12 @@ class ContextCompressor:
         findings: List[str] = []
         data_refs: List[str] = []
         goals: List[str] = []
+        completed_steps: List[str] = []
+        pending_steps: List[str] = []
+        artifacts: List[str] = []
+        tool_results: List[str] = []
+        failures: List[str] = []
+        quality_gates: List[str] = []
 
         for msg in messages:
             role = msg.get("role", "")
@@ -164,6 +170,9 @@ class ContextCompressor:
                 continue
 
             if role == "user":
+                if any(kw in content.lower() for kw in ("research", "analysis", "paper", "empirical")):
+                    if len(content) > len(research_question):
+                        research_question = content[:400]
                 if any(kw in content for kw in ("研究", "分析", "问题", "假设")):
                     if len(content) > len(research_question):
                         research_question = content[:400]
@@ -186,6 +195,7 @@ class ContextCompressor:
                     data = json.loads(content)
                     if data.get("result_id"):
                         data_refs.append(data["result_id"])
+                        tool_results.append(f"result_id={data['result_id']}")
                     if data.get("apa"):
                         findings.append(data["apa"][:400])
                     if data.get("method_id"):
@@ -194,17 +204,41 @@ class ContextCompressor:
                         methods = data["recommended_methods"]
                         if methods:
                             methodology = methods[0].get("method_id", methodology)
+                    if data.get("artifacts"):
+                        artifacts.extend(str(item)[:350] for item in data["artifacts"][:10])
+                    if data.get("warnings"):
+                        failures.extend(str(item)[:350] for item in data["warnings"][:10])
+                    if data.get("stage_outputs"):
+                        tool_results.append("stage_outputs captured")
+                    if data.get("executed") is not None:
+                        tool_results.append(f"executed={data.get('executed')}")
                 except (json.JSONDecodeError, TypeError):
                     # Non-JSON tool result
                     if len(content) > 30 and len(content) < 500:
                         findings.append(content[:300])
 
+        parts.append(
+            "Continuity handoff packet: preserve objective, completed work, pending work, "
+            "tool evidence, artifacts, failures, quality gates, and next action."
+        )
         if research_question:
             parts.append(f"User's research question: {research_question}")
         if methodology:
             parts.append(f"Methodology selected: {methodology}")
         if data_refs:
             parts.append(f"Data / result IDs: {', '.join(data_refs[:10])}")
+        if completed_steps:
+            parts.append("Completed steps:\n" + "\n".join(f"- {x}" for x in completed_steps[-8:]))
+        if pending_steps:
+            parts.append("Pending or blocked steps:\n" + "\n".join(f"- {x}" for x in pending_steps[-8:]))
+        if artifacts:
+            parts.append("Artifacts and exports:\n" + "\n".join(f"- {x}" for x in artifacts[-10:]))
+        if tool_results:
+            parts.append("Tool execution facts:\n" + "\n".join(f"- {x}" for x in tool_results[-10:]))
+        if failures:
+            parts.append("Warnings / blockers:\n" + "\n".join(f"- {x}" for x in failures[-10:]))
+        if quality_gates:
+            parts.append("Quality and credibility gates:\n" + "\n".join(f"- {x}" for x in quality_gates[-8:]))
         if findings:
             unique_findings = []
             seen = set()
