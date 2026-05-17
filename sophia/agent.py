@@ -76,6 +76,10 @@ from sophia.workspace_context import (
     collect_workspace_context,
     save_generated_markdown,
 )
+from sophia.paper_quality import (
+    append_quality_report_if_needed,
+    build_paper_generation_contract,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -424,7 +428,10 @@ class SophiaAgent:
 
     def _inject_workspace_context(self, user_message: str, workspace_context) -> str:
         block = workspace_context.to_prompt_block()
+        paper_contract = build_paper_generation_contract(user_message)
         if not block:
+            if paper_contract:
+                return f"{user_message}\n\n{paper_contract}"
             return user_message
         requirements = [
             "【强制执行约束】",
@@ -437,9 +444,13 @@ class SophiaAgent:
                 "4. 按用户要求生成完整论文正文，严格控制标题层级；不要自行添加三级标题。",
                 "5. 论文完成后，系统会自动保存 Markdown 文档；正文中仍需给出完整内容。",
             ])
-        return f"{user_message}\n\n{block}\n\n" + "\n".join(requirements)
+        parts = [user_message, block, "\n".join(requirements)]
+        if paper_contract:
+            parts.append(paper_contract)
+        return "\n\n".join(parts)
 
     def _append_generated_document_path(self, user_message: str, final_text: str) -> str:
+        final_text = append_quality_report_if_needed(user_message, final_text)
         path = save_generated_markdown(self.workspace, user_message, final_text)
         if not path:
             return final_text

@@ -11,6 +11,15 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+from sophia.paper_quality import (
+    MIN_BODY_CHARS,
+    MIN_FIGURES,
+    MIN_REFERENCES,
+    MIN_TABLES,
+    append_quality_report_if_needed,
+    quality_report_dict,
+)
+
 logger = logging.getLogger(__name__)
 
 DOC_TYPES = ["paper", "report", "monograph", "grant-nsfc", "grant-nssfc", "grant-moe"]
@@ -142,6 +151,16 @@ def doc_create(args: Dict[str, Any], workspace: str) -> str:
         "outline": outline,
         "sections": sections,
         "references": [],
+        "quality_requirements": {
+            "min_body_chars_excluding_references": MIN_BODY_CHARS,
+            "min_references": MIN_REFERENCES,
+            "min_tables": MIN_TABLES,
+            "min_figures": MIN_FIGURES,
+            "style": (
+                "formal academic prose, progressive logic, short direct sentences, "
+                "no fabricated citations or data"
+            ),
+        } if doc_type == "paper" else {},
         "created_at": datetime.now().isoformat(),
         "updated_at": datetime.now().isoformat(),
     }
@@ -391,6 +410,9 @@ def doc_export_markdown(args: Dict[str, Any], workspace: str) -> str:
         lines.append("")
 
     markdown = "\n".join(lines)
+    quality_report = quality_report_dict(markdown) if doc.get("doc_type") == "paper" else None
+    if doc.get("doc_type") == "paper":
+        markdown = append_quality_report_if_needed(f"write paper {doc.get('title', '')}", markdown)
 
     _ensure_dirs(workspace)
     export_path = os.path.join(_docs_dir(workspace), f"{doc_id}.md")
@@ -403,7 +425,25 @@ def doc_export_markdown(args: Dict[str, Any], workspace: str) -> str:
         "format": "markdown",
         "path": export_path,
         "chars": len(markdown),
+        "quality_report": quality_report,
     }, ensure_ascii=False)
+
+
+def doc_quality_check(args: Dict[str, Any], workspace: str) -> str:
+    """Check whether a paper document meets the minimum generation contract."""
+    doc_id = args.get("id", "")
+    content = args.get("content", "")
+    if doc_id:
+        doc = _load_doc(workspace, doc_id)
+        if not doc:
+            return json.dumps({"error": f"Document '{doc_id}' not found"}, ensure_ascii=False)
+        exported = json.loads(doc_export_markdown({"id": doc_id}, workspace))
+        if exported.get("path") and os.path.exists(exported["path"]):
+            with open(exported["path"], "r", encoding="utf-8") as f:
+                content = f.read()
+    if not content:
+        return json.dumps({"error": "id or content is required"}, ensure_ascii=False)
+    return json.dumps(quality_report_dict(content), ensure_ascii=False, indent=2)
 
 
 def register_writing_tools(registry, workspace: str, result_store=None):
@@ -532,6 +572,27 @@ def register_writing_tools(registry, workspace: str, result_store=None):
             "required": ["id", "section", "content"],
         },
         handler=partial(doc_write_section, workspace=workspace),
+    )
+
+    registry.register(
+        name="doc_quality_check",
+        description=(
+            "Check whether an academic paper meets Sophia's minimum quality contract: "
+            "6500 body characters excluding references, 20 references, 5 tables, "
+            "8 figures/diagrams, and banned lazy style patterns."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "id": {"type": "string", "description": "Document id to check"},
+                "content": {
+                    "type": "string",
+                    "description": "Raw Markdown paper content to check if no document id is available",
+                },
+            },
+            "required": [],
+        },
+        handler=partial(doc_quality_check, workspace=workspace),
     )
 
     registry.register(

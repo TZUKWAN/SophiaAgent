@@ -149,6 +149,19 @@ class TestWritingTools:
         )
         assert result["format"] == "markdown"
         assert os.path.exists(result["path"])
+        assert result["quality_report"]["passed"] is False
+
+    def test_doc_quality_check_reports_short_paper(self, tmp_workspace):
+        from sophia.tools.writing import register_writing_tools
+        from sophia.tools.registry import ToolRegistry
+        reg = ToolRegistry()
+        register_writing_tools(reg, tmp_workspace)
+
+        result = json.loads(reg.dispatch("doc_quality_check", {
+            "content": "# 论文\n\n正文很短。\n\n## 参考文献\n\n[1] 张三. 文章. 期刊, 2024."
+        }))
+        assert result["passed"] is False
+        assert result["reference_count"] == 1
 
 
 class TestAnalysisSandbox:

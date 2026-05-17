@@ -24,6 +24,7 @@ jobs:
           sophia/lifecycle.py
           sophia/integrations.py
           sophia/workspace_context.py
+          sophia/paper_quality.py
           sophia/doctor.py
           sophia/research/empirical_workflow.py
           sophia/tools/web.py
@@ -47,6 +48,7 @@ jobs:
           tests/test_integrations.py
           tests/test_mcp_integration.py
           tests/test_workspace_context.py
+          tests/test_paper_quality.py
           tests/test_doctor.py
           tests/test_network_tools.py
           tests/test_provider_fallback.py
