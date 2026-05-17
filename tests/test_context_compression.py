@@ -91,8 +91,30 @@ class TestCompressionTrigger:
             {"role": "tool", "content": '{"result_id": "res_abc", "apa": "t(98)=3.24, p=.002"}'},
         ]
         summary = comp._summarize(messages)
+        assert "Continuity handoff packet" in summary
         assert "res_abc" in summary
         assert "t(98)=3.24" in summary
+
+    def test_summarize_preserves_handoff_artifacts_and_warnings(self):
+        comp = ContextCompressor()
+        messages = [
+            {
+                "role": "tool",
+                "content": (
+                    '{"result_id": "res_emp", "executed": true, '
+                    '"artifacts": ["paper.docx"], "warnings": ["robustness skipped"], '
+                    '"stage_outputs": {"estimation": {"status": "completed"}}}'
+                ),
+            },
+        ]
+
+        summary = comp._summarize(messages)
+
+        assert "Continuity handoff packet" in summary
+        assert "paper.docx" in summary
+        assert "robustness skipped" in summary
+        assert "stage_outputs captured" in summary
+        assert "executed=True" in summary
 
     def test_64k_default_settings(self):
         comp = ContextCompressor()
