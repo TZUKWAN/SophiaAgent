@@ -17,6 +17,18 @@ PAPER_GENERATION_CONTRACT = """\
 The user is asking for an academic paper or article. You must write the full
 paper body in this answer, not a short outline and not a placeholder.
 
+Reference priority:
+1. If the user provided references, uploaded papers, or workspace literature,
+   prioritize those sources and cite them first.
+2. If the user did not provide references, first prompt the user to provide
+   their preferred reference list or workspace papers.
+3. Only when the user has no references available, or explicitly asks Sophia
+   to search independently, use literature_search, web_search, citation tools,
+   or other verifiable sources to supplement references.
+4. Never replace user-provided references with searched references unless the
+   user-provided source is unusable, duplicated, or unverifiable. Explain that
+   limitation clearly.
+
 Minimum deliverables:
 1. Body length must be at least 6500 Chinese characters or equivalent academic
    prose, excluding the reference list.
@@ -73,6 +85,45 @@ def build_paper_generation_contract(user_message: str) -> str:
     if not is_paper_generation_request(user_message):
         return ""
     return PAPER_GENERATION_CONTRACT
+
+
+def has_user_supplied_references(text: str) -> bool:
+    lowered = text.lower()
+    if any(term in lowered for term in ["参考文献如下", "参考文献：", "references:", "bibliography"]):
+        return True
+    numbered_refs = re.findall(r"(?m)^\s*(\[\d+\]|\d+[\.\)]|\-\s+).{12,}", text)
+    if len(numbered_refs) >= 2:
+        return True
+    return bool(re.search(r"(?m).{2,}(\(\d{4}[a-z]?\)|\d{4}).{8,}", text))
+
+
+def build_reference_priority_notice(
+    user_message: str,
+    *,
+    workspace_has_evidence: bool = False,
+) -> str:
+    if not is_paper_generation_request(user_message):
+        return ""
+    if has_user_supplied_references(user_message):
+        return (
+            "[Reference priority notice]\n"
+            "The user has supplied references in the request. Prioritize these references. "
+            "Use search only to verify, complete metadata, or supplement gaps after the user-provided "
+            "references have been used."
+        )
+    if workspace_has_evidence:
+        return (
+            "[Reference priority notice]\n"
+            "Workspace literature has been read. Prioritize the workspace papers and documents. "
+            "Use search only to verify metadata or supplement unavoidable gaps."
+        )
+    return (
+        "[Reference priority notice]\n"
+        "Before independently searching for references, ask the user to provide their preferred "
+        "reference list or workspace papers. If the user has no references available or explicitly "
+        "asks Sophia to search, then use literature_search, web_search, citation tools, or other "
+        "verifiable sources. Do not fabricate references."
+    )
 
 
 def inspect_generated_paper(content: str) -> PaperQualityReport:

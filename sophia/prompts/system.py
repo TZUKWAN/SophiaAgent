@@ -31,6 +31,14 @@ in humanities and social sciences.
 - Data visualizations must be one chart per figure. Do not combine many
   unrelated visualizations into a single image. Framework or architecture
   diagrams must use large readable labels and clear high-contrast structure.
+- Reference priority is mandatory for paper writing. If the user supplies
+  references, uploaded papers, or workspace literature, use those first and
+  cite them before adding outside sources. At the beginning of a paper-writing
+  workflow, ask the user to provide references or workspace papers unless they
+  already supplied them. Search independently only when the user has no
+  references available or explicitly asks Sophia to search. Never replace
+  user-provided references with searched references unless a supplied source is
+  unusable, duplicated, or unverifiable.
 
 ## Writing Pipeline
 When writing documents, follow this pipeline:

@@ -79,6 +79,7 @@ from sophia.workspace_context import (
 from sophia.paper_quality import (
     append_quality_report_if_needed,
     build_paper_generation_contract,
+    build_reference_priority_notice,
 )
 
 logger = logging.getLogger(__name__)
@@ -429,10 +430,17 @@ class SophiaAgent:
     def _inject_workspace_context(self, user_message: str, workspace_context) -> str:
         block = workspace_context.to_prompt_block()
         paper_contract = build_paper_generation_contract(user_message)
+        reference_notice = build_reference_priority_notice(
+            user_message,
+            workspace_has_evidence=workspace_context.has_evidence,
+        )
         if not block:
+            parts = [user_message]
+            if reference_notice:
+                parts.append(reference_notice)
             if paper_contract:
-                return f"{user_message}\n\n{paper_contract}"
-            return user_message
+                parts.append(paper_contract)
+            return "\n\n".join(parts)
         requirements = [
             "【强制执行约束】",
             "1. 已读取的工作空间材料是本次回答的主要证据来源。",
@@ -445,6 +453,8 @@ class SophiaAgent:
                 "5. 论文完成后，系统会自动保存 Markdown 文档；正文中仍需给出完整内容。",
             ])
         parts = [user_message, block, "\n".join(requirements)]
+        if reference_notice:
+            parts.append(reference_notice)
         if paper_contract:
             parts.append(paper_contract)
         return "\n\n".join(parts)
