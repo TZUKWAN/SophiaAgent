@@ -1,0 +1,52 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[UTF8]{ctex}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{enumitem}
+
+\onehalfspacing
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+}
+
+\title{\textbf{ {{ title }} }}
+{% if authors %}\author{ {{ authors }} }{% endif %}
+\date{ {{ date }} }
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+{% if abstract %}
+\chapter*{摘要}
+\addcontentsline{toc}{chapter}{摘要}
+{{ abstract }}
+{% endif %}
+
+{% for section in sections %}
+\chapter{ {{ section.title }} }
+{{ section.content }}
+
+{% endfor %}
+
+{% if references %}
+\chapter*{参考文献}
+\addcontentsline{toc}{chapter}{参考文献}
+\begin{enumerate}[label={[\arabic*]}]
+{% for ref in references %}
+\item {{ ref }}
+{% endfor %}
+\end{enumerate}
+{% endif %}
+
+\end{document}

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SophiaAgent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" id="hljs-light">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-dark" disabled>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app" id="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">S</div>
+                <div class="logo-text">
+                    <div class="logo-title">SophiaAgent</div>
+                    <div class="logo-subtitle">Research Assistant</div>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-actions">
+            <button class="btn-new-chat" id="newChatBtn">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                New Chat
+            </button>
+        </div>
+        <div class="sidebar-sessions" id="sessionsList"></div>
+        <div class="sidebar-footer">
+            <button class="btn-footer" id="settingsBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </button>
+            <button class="btn-footer" id="themeBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="main" id="mainArea">
+        <header class="chat-header">
+            <div class="header-left">
+                <button class="btn-icon" id="sidebarToggle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+                <span class="model-badge" id="modelBadge">--</span>
+            </div>
+            <div class="header-right">
+                <div class="usage-pill" id="usagePill" title="Token usage">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <span id="tokenCount">0</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="messages" id="messages">
+            <div class="empty-state" id="emptyState">
+                <div class="empty-logo">S</div>
+                <h2>SophiaAgent</h2>
+                <p>Humanities &amp; Social Science Research Assistant</p>
+                <div class="empty-hints">
+                    <div class="hint">Start a conversation to begin your research</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-container">
+                <textarea id="messageInput" placeholder="Send a message..." rows="1"></textarea>
+                <button class="btn-send" id="sendBtn" disabled>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                </button>
+            </div>
+            <div class="input-footer">SophiaAgent can make mistakes. Verify important information.</div>
+        </div>
+    </main>
+
+    <!-- Settings Panel -->
+    <div class="settings-overlay" id="settingsOverlay"></div>
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <h2>Settings</h2>
+            <button class="btn-icon" id="settingsClose">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="settings-body">
+            <div class="settings-section">
+                <h3>API Provider</h3>
+                <div class="settings-group">
+                    <label>Provider</label>
+                    <select id="settingProvider">
+                        <option value="openai-compat">OpenAI Compatible</option>
+                        <option value="anthropic">Anthropic</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label>Model Name</label>
+                    <input id="settingModel" type="text" placeholder="e.g. gpt-4o-mini">
+                </div>
+                <div class="settings-group">
+                    <label>Base URL</label>
+                    <input id="settingBaseUrl" type="text" placeholder="https://api.openai.com/v1">
+                </div>
+                <div class="settings-group">
+                    <label>API Key</label>
+                    <input id="settingApiKey" type="password" placeholder="sk-...">
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Workspace</h3>
+                <div class="settings-group">
+                    <label>Current Workspace</label>
+                    <div class="workspace-row">
+                        <select id="settingWorkspace"></select>
+                        <button class="btn-small" id="addWorkspaceBtn" title="Add workspace">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Usage</h3>
+                <div class="usage-stats" id="usageStats">
+                    <div class="usage-stat">
+                        <span class="usage-stat-label">Prompt Tokens</span>
+                        <span class="usage-stat-value" id="usagePrompt">0</span>
+                    </div>
+                    <div class="usage-stat">
+                        <span class="usage-stat-label">Completion Tokens</span>
+                        <span class="usage-stat-value" id="usageCompletion">0</span>
+                    </div>
+                    <div class="usage-stat">
+                        <span class="usage-stat-label">Total Tokens</span>
+                        <span class="usage-stat-value" id="usageTotal">0</span>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-save" id="saveSettingsBtn">Save Settings</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="/static/app.js"></script>
+<script>
+    fetch('/api/config').then(r=>r.json()).then(d=>{
+        document.getElementById('modelBadge').textContent = d.model;
+    });
+</script>
+</body>
+</html>

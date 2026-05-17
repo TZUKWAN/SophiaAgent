@@ -1,0 +1,54 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[UTF8]{ctex}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+
+\onehalfspacing
+
+% 教育部人文社科项目申请书格式
+\titleformat{\section}{\large\bfseries}{\thesection、}{0em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+
+\title{\textbf{教育部人文社会科学研究项目申请书}}
+\author{ {{ authors }} }
+\date{}
+
+\begin{document}
+\maketitle
+
+\vspace{2em}
+\begin{center}
+\begin{tabular}{ll}
+\textbf{项目名称：} & \multirow{2}{*}{ {{ title }} } \\
+& \\
+\textbf{申请人：} & {{ authors }} \\
+\textbf{所在学校：} & \\
+\textbf{申请日期：} & {{ date }} \\
+\end{tabular}
+\end{center}
+
+\vspace{2em}
+
+{% for section in sections %}
+\section{ {{ section.title }} }
+{{ section.content }}
+
+{% endfor %}
+
+{% if references %}
+\section*{主要参考文献}
+\addcontentsline{toc}{section}{主要参考文献}
+\begin{enumerate}[label={[\arabic*]}]
+{% for ref in references %}
+\item {{ ref }}
+{% endfor %}
+\end{enumerate}
+{% endif %}
+
+\end{document}

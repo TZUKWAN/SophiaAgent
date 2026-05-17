@@ -1,0 +1,64 @@
+\documentclass[12pt,a4paper]{book}
+
+\usepackage[UTF8]{ctex}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+
+\onehalfspacing
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+}
+
+\title{\textbf{ {{ title }} }}
+{% if authors %}\author{ {{ authors }} }{% endif %}
+\date{ {{ date }} }
+
+\begin{document}
+\maketitle
+
+\frontmatter
+\tableofcontents
+
+{% if abstract %}
+\chapter*{序言}
+\addcontentsline{toc}{chapter}{序言}
+{{ abstract }}
+{% endif %}
+
+\mainmatter
+
+{% for section in sections %}
+\chapter{ {{ section.title }} }
+{{ section.content }}
+
+{% endfor %}
+
+\backmatter
+
+{% if references %}
+\chapter*{参考文献}
+\addcontentsline{toc}{chapter}{参考文献}
+\begin{enumerate}[label={[\arabic*]}]
+{% for ref in references %}
+\item {{ ref }}
+{% endfor %}
+\end{enumerate}
+{% endif %}
+
+\end{document}

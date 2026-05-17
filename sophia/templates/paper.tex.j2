@@ -1,0 +1,58 @@
+\documentclass[12pt,a4paper]{article}
+
+% 中文支持
+\usepackage[UTF8]{ctex}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{amsmath}
+\usepackage{enumitem}
+
+\onehalfspacing
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+}
+
+\title{\textbf{ {{ title }} }}
+{% if authors %}\author{ {{ authors }} }{% endif %}
+\date{}
+
+\begin{document}
+\maketitle
+
+{% if abstract %}
+\begin{abstract}
+{{ abstract }}
+\end{abstract}
+{% endif %}
+
+{% if keywords %}
+\noindent\textbf{关键词：} {{ keywords | join('；') }}
+{% endif %}
+
+\vspace{1em}
+
+{% for section in sections %}
+\section{ {{ section.title }} }
+{{ section.content }}
+
+{% endfor %}
+
+{% if references %}
+\begin{thebibliography}{99}
+{% for ref in references %}
+\bibitem{ref{{ loop.index }}}
+{{ ref }}
+
+{% endfor %}
+\end{thebibliography}
+{% endif %}
+
+\end{document}
