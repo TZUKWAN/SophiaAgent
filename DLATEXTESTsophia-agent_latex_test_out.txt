@@ -1,0 +1,400 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-9.0.2, pluggy-1.5.0 -- C:\Users\lauze\miniconda3\python.exe
+cachedir: .pytest_cache
+rootdir: D:\LATEXTEST\sophia-agent
+configfile: pyproject.toml
+plugins: anyio-4.12.1, langsmith-0.7.26, asyncio-1.3.0, cov-7.0.0, typeguard-4.4.4
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+tests/test_latex_exporter.py::TestLaTeXExporter::test_export_basic_apa7 FAILED [100%]
+tests/test_latex_exporter.py::TestLaTeXExporter::test_export_basic_apa7 ERROR [100%]
+
+=================================== ERRORS ====================================
+________ ERROR at teardown of TestLaTeXExporter.test_export_basic_apa7 ________
+
+path = 'C:\\Users\\lauze\\AppData\\Local\\Temp\\tmp6ylqi5xb'
+onexc = <function TemporaryDirectory._rmtree.<locals>.onexc at 0x000001FDDBD593A0>
+
+    def _rmtree_unsafe(path, onexc):
+        def onerror(err):
+            if not isinstance(err, FileNotFoundError):
+                onexc(os.scandir, err.filename, err)
+        results = os.walk(path, topdown=False, onerror=onerror, followlinks=os._walk_symlinks_as_files)
+        for dirpath, dirnames, filenames in results:
+            for name in dirnames:
+                fullname = os.path.join(dirpath, name)
+                try:
+                    os.rmdir(fullname)
+                except FileNotFoundError:
+                    continue
+                except OSError as err:
+                    onexc(os.rmdir, fullname, err)
+            for name in filenames:
+                fullname = os.path.join(dirpath, name)
+                try:
+>                   os.unlink(fullname)
+E                   PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'C:\\Users\\lauze\\AppData\\Local\\Temp\\tmp6ylqi5xb\\.research\\results.db'
+
+C:\Users\lauze\miniconda3\Lib\shutil.py:625: PermissionError
+
+During handling of the above exception, another exception occurred:
+
+    @pytest.fixture
+    def tmp_store():
+>       with tempfile.TemporaryDirectory() as td:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_latex_exporter.py:18: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <TemporaryDirectory 'C:\\Users\\lauze\\AppData\\Local\\Temp\\tmp6ylqi5xb'>
+exc = None, value = None, tb = None
+
+    def __exit__(self, exc, value, tb):
+        if self._delete:
+>           self.cleanup()
+
+C:\Users\lauze\miniconda3\Lib\tempfile.py:950: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <TemporaryDirectory 'C:\\Users\\lauze\\AppData\\Local\\Temp\\tmp6ylqi5xb'>
+
+    def cleanup(self):
+        if self._finalizer.detach() or _os.path.exists(self.name):
+>           self._rmtree(self.name, ignore_errors=self._ignore_cleanup_errors)
+
+C:\Users\lauze\miniconda3\Lib\tempfile.py:954: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+cls = <class 'tempfile.TemporaryDirectory'>
+name = 'C:\\Users\\lauze\\AppData\\Local\\Temp\\tmp6ylqi5xb'
+ignore_errors = False, repeated = False
+
+    @classmethod
+    def _rmtree(cls, name, ignore_errors=False, repeated=False):
+        def onexc(func, path, exc):
+            if isinstance(exc, PermissionError):
+                if repeated and path == name:
+                    if ignore_errors:
+                        return
+                    raise
+    
+                try:
+                    if path != name:
+                        _resetperms(_os.path.dirname(path))
+                    _resetperms(path)
+    
+                    try:
+                        _os.unlink(path)
+                    except IsADirectoryError:
+                        cls._rmtree(path, ignore_errors=ignore_errors)
+                    except PermissionError:
+                        # The PermissionError handler was originally added for
+                        # FreeBSD in directories, but it seems that it is raised
+                        # on Windows too.
+                        # bpo-43153: Calling _rmtree again may
+                        # raise NotADirectoryError and mask the PermissionError.
+                        # So we must re-raise the current PermissionError if
+                        # path is not a directory.
+                        if not _os.path.isdir(path) or _os.path.isjunction(path):
+                            if ignore_errors:
+                                return
+                            raise
+                        cls._rmtree(path, ignore_errors=ignore_errors,
+                                    repeated=(path == name))
+                except FileNotFoundError:
+                    pass
+            elif isinstance(exc, FileNotFoundError):
+                pass
+            else:
+                if not ignore_errors:
+                    raise
+    
+>       _shutil.rmtree(name, onexc=onexc)
+
+C:\Users\lauze\miniconda3\Lib\tempfile.py:934: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\lauze\\AppData\\Local\\Temp\\tmp6ylqi5xb'
+ignore_errors = False, onerror = None
+
+    def rmtree(path, ignore_errors=False, onerror=None, *, onexc=None, dir_fd=None):
+        """Recursively delete a directory tree.
+    
+        If dir_fd is not None, it should be a file descriptor open to a directory;
+        path will then be relative to that directory.
+        dir_fd may not be implemented on your platform.
+        If it is unavailable, using it will raise a NotImplementedError.
+    
+        If ignore_errors is set, errors are ignored; otherwise, if onexc or
+        onerror is set, it is called to handle the error with arguments (func,
+        path, exc_info) where func is platform and implementation dependent;
+        path is the argument to that function that caused it to fail; and
+        the value of exc_info describes the exception. For onexc it is the
+        exception instance, and for onerror it is a tuple as returned by
+        sys.exc_info().  If ignore_errors is false and both onexc and
+        onerror are None, the exception is reraised.
+    
+        onerror is deprecated and only remains for backwards compatibility.
+        If both onerror and onexc are set, onerror is ignored and onexc is used.
+        """
+    
+        sys.audit("shutil.rmtree", path, dir_fd)
+        if ignore_errors:
+            def onexc(*args):
+                pass
+        elif onerror is None and onexc is None:
+            def onexc(*args):
+                raise
+        elif onexc is None:
+            if onerror is None:
+                def onexc(*args):
+                    raise
+            else:
+                # delegate to onerror
+                def onexc(*args):
+                    func, path, exc = args
+                    if exc is None:
+                        exc_info = None, None, None
+                    else:
+                        exc_info = type(exc), exc, exc.__traceback__
+                    return onerror(func, path, exc_info)
+    
+        if _use_fd_functions:
+            # While the unsafe rmtree works fine on bytes, the fd based does not.
+            if isinstance(path, bytes):
+                path = os.fsdecode(path)
+            stack = [(os.lstat, dir_fd, path, None)]
+            try:
+                while stack:
+                    _rmtree_safe_fd(stack, onexc)
+            finally:
+                # Close any file descriptors still on the stack.
+                while stack:
+                    func, fd, path, entry = stack.pop()
+                    if func is not os.close:
+                        continue
+                    try:
+                        os.close(fd)
+                    except OSError as err:
+                        onexc(os.close, path, err)
+        else:
+            if dir_fd is not None:
+                raise NotImplementedError("dir_fd unavailable on this platform")
+            try:
+                st = os.lstat(path)
+            except OSError as err:
+                onexc(os.lstat, path, err)
+                return
+            try:
+                if _rmtree_islink(st):
+                    # symlinks to directories are forbidden, see bug #1669
+                    raise OSError("Cannot call rmtree on a symbolic link")
+            except OSError as err:
+                onexc(os.path.islink, path, err)
+                # can't continue even if onexc hook returns
+                return
+>           return _rmtree_unsafe(path, onexc)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+C:\Users\lauze\miniconda3\Lib\shutil.py:790: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\lauze\\AppData\\Local\\Temp\\tmp6ylqi5xb'
+onexc = <function TemporaryDirectory._rmtree.<locals>.onexc at 0x000001FDDBD593A0>
+
+    def _rmtree_unsafe(path, onexc):
+        def onerror(err):
+            if not isinstance(err, FileNotFoundError):
+                onexc(os.scandir, err.filename, err)
+        results = os.walk(path, topdown=False, onerror=onerror, followlinks=os._walk_symlinks_as_files)
+        for dirpath, dirnames, filenames in results:
+            for name in dirnames:
+                fullname = os.path.join(dirpath, name)
+                try:
+                    os.rmdir(fullname)
+                except FileNotFoundError:
+                    continue
+                except OSError as err:
+                    onexc(os.rmdir, fullname, err)
+            for name in filenames:
+                fullname = os.path.join(dirpath, name)
+                try:
+                    os.unlink(fullname)
+                except FileNotFoundError:
+                    continue
+                except OSError as err:
+>                   onexc(os.unlink, fullname, err)
+
+C:\Users\lauze\miniconda3\Lib\shutil.py:629: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+func = <built-in function unlink>
+path = 'C:\\Users\\lauze\\AppData\\Local\\Temp\\tmp6ylqi5xb\\.research\\results.db'
+exc = PermissionError(13, '另一个程序正在使用此文件，进程无法访问。')
+
+    def onexc(func, path, exc):
+        if isinstance(exc, PermissionError):
+            if repeated and path == name:
+                if ignore_errors:
+                    return
+                raise
+    
+            try:
+                if path != name:
+                    _resetperms(_os.path.dirname(path))
+                _resetperms(path)
+    
+                try:
+>                   _os.unlink(path)
+E                   PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'C:\\Users\\lauze\\AppData\\Local\\Temp\\tmp6ylqi5xb\\.research\\results.db'
+
+C:\Users\lauze\miniconda3\Lib\tempfile.py:909: PermissionError
+================================== FAILURES ===================================
+__________________ TestLaTeXExporter.test_export_basic_apa7 ___________________
+
+self = <test_latex_exporter.TestLaTeXExporter object at 0x000001FDDBC9AE90>
+reporter = <sophia.research.latex_exporter.LaTeXReporter object at 0x000001FDDBC16BA0>
+tmp_store = <sophia.research.result_store.ResultStore object at 0x000001FDDBC17E00>
+
+    def test_export_basic_apa7(self, reporter, tmp_store):
+        # Store a dummy result
+        rid = tmp_store.store({
+            "test": "independent t-test",
+            "t": 2.5,
+            "p": 0.012,
+            "df": 48,
+            "cohen_d": 0.71,
+            "apa": "An independent-samples t-test revealed a significant difference, t(48) = 2.50, p = .012, d = 0.71 (medium effect size).",
+            "n": 50,
+        }, kind="result", tool="research_ttest", params={"group1": [1, 2, 3]})
+    
+>       res = _parse(reporter.export({
+            "result_ids": [rid],
+            "title": "Test Report",
+            "authors": ["Alice Smith", "Bob Jones"],
+            "template": "apa7",
+            "output_name": "test_report",
+        }))
+
+tests\test_latex_exporter.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <sophia.research.latex_exporter.LaTeXReporter object at 0x000001FDDBC16BA0>
+args = {'authors': ['Alice Smith', 'Bob Jones'], 'output_name': 'test_report', 'result_ids': ['res_7b87adbb'], 'template': 'apa7', ...}
+
+    def export(self, args: dict) -> str:
+        """
+        Args:
+            result_ids: List[str] — results to include
+            title: str
+            authors: List[str]
+            sections: List[str] — e.g. ["abstract", "methods", "results", "discussion"]
+            template: "apa7" | "elsevier" | "ieee"
+            include_figures: bool (default True)
+            include_tables: bool (default True)
+            output_name: str (default "report")
+    
+        Returns JSON with: path, compiled, n_results, warnings.
+        """
+        result_ids = args.get("result_ids", [])
+        title = args.get("title", "Research Report")
+        authors = args.get("authors", ["Anonymous"])
+        sections = args.get("sections", ["abstract", "methods", "results", "discussion"])
+        template = args.get("template", "apa7")
+        include_tables = bool(args.get("include_tables", True))
+        output_name = args.get("output_name", "report")
+    
+        # Collect results from store
+        results: List[Dict[str, Any]] = []
+        warnings: List[str] = []
+        for rid in result_ids:
+            try:
+                data = self.store.get(rid)
+                meta = self.store.get_metadata(rid)
+                if isinstance(data, dict):
+                    results.append({"result_id": rid, "data": data, "meta": meta})
+                else:
+                    warnings.append(f"result_id {rid}: payload is not a dict, skipping.")
+            except Exception as exc:
+                warnings.append(f"result_id {rid}: {exc}")
+    
+        # Build sections
+        abstract_text = self._build_abstract(results, title)
+>       methods_text = self._build_methods(results)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+sophia\research\latex_exporter.py:60: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+results = [{'data': {'apa': 'An independent-samples t-test revealed a significant difference, t(48) = 2.50, p = .012, d = 0.71 (...-16T08:37:43.819128+00:00', 'id': 'res_7b87adbb', 'inline': True, 'kind': 'result', ...}, 'result_id': 'res_7b87adbb'}]
+
+    @staticmethod
+    def _build_methods(results: List[dict]) -> str:
+        paragraphs = []
+        seen_tools = set()
+        for r in results:
+            meta = r["meta"]
+            tool = meta.get("tool", "unknown")
+            if tool in seen_tools or tool in ("research_load_data", "research_validate_data"):
+                continue
+            seen_tools.add(tool)
+>           params = json.loads(meta.get("params", "{}"))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+sophia\research\latex_exporter.py:156: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+s = {'group1': [1, 2, 3]}, cls = None, object_hook = None, parse_float = None
+parse_int = None, parse_constant = None, object_pairs_hook = None, kw = {}
+
+    def loads(s, *, cls=None, object_hook=None, parse_float=None,
+            parse_int=None, parse_constant=None, object_pairs_hook=None, **kw):
+        """Deserialize ``s`` (a ``str``, ``bytes`` or ``bytearray`` instance
+        containing a JSON document) to a Python object.
+    
+        ``object_hook`` is an optional function that will be called with the
+        result of any object literal decode (a ``dict``). The return value of
+        ``object_hook`` will be used instead of the ``dict``. This feature
+        can be used to implement custom decoders (e.g. JSON-RPC class hinting).
+    
+        ``object_pairs_hook`` is an optional function that will be called with the
+        result of any object literal decoded with an ordered list of pairs.  The
+        return value of ``object_pairs_hook`` will be used instead of the ``dict``.
+        This feature can be used to implement custom decoders.  If ``object_hook``
+        is also defined, the ``object_pairs_hook`` takes priority.
+    
+        ``parse_float``, if specified, will be called with the string
+        of every JSON float to be decoded. By default this is equivalent to
+        float(num_str). This can be used to use another datatype or parser
+        for JSON floats (e.g. decimal.Decimal).
+    
+        ``parse_int``, if specified, will be called with the string
+        of every JSON int to be decoded. By default this is equivalent to
+        int(num_str). This can be used to use another datatype or parser
+        for JSON integers (e.g. float).
+    
+        ``parse_constant``, if specified, will be called with one of the
+        following strings: -Infinity, Infinity, NaN.
+        This can be used to raise an exception if invalid JSON numbers
+        are encountered.
+    
+        To use a custom ``JSONDecoder`` subclass, specify it with the ``cls``
+        kwarg; otherwise ``JSONDecoder`` is used.
+        """
+        if isinstance(s, str):
+            if s.startswith('\ufeff'):
+                raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                                      s, 0)
+        else:
+            if not isinstance(s, (bytes, bytearray)):
+>               raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                                f'not {s.__class__.__name__}')
+E               TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+C:\Users\lauze\miniconda3\Lib\json\__init__.py:339: TypeError
+=========================== short test summary info ===========================
+FAILED tests/test_latex_exporter.py::TestLaTeXExporter::test_export_basic_apa7
+ERROR tests/test_latex_exporter.py::TestLaTeXExporter::test_export_basic_apa7
+========================= 1 failed, 1 error in 0.65s ==========================

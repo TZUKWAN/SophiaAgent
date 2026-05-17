@@ -1,0 +1,16 @@
+services:
+  sophia:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - sophia-workspace:/root/SophiaWorkspace
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - SOPHIA_API_KEY=${SOPHIA_API_KEY}
+      - SOPHIA_BASE_URL=${SOPHIA_BASE_URL:-}
+      - SOPHIA_MODEL=${SOPHIA_MODEL:-}
+    restart: unless-stopped
+
+volumes:
+  sophia-workspace:
