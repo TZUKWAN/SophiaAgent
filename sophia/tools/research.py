@@ -5,15 +5,17 @@ Integrates: Semantic Scholar API, arXiv API, Crossref API.
 
 import json
 import logging
+import time
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import httpx
 
 logger = logging.getLogger(__name__)
 
-HTTP_TIMEOUT = 30.0
+HTTP_TIMEOUT = 20.0
+MAX_NETWORK_ATTEMPTS = 2
 
 # arXiv Atom namespace
 ATOM_NS = {"atom": "http://www.w3.org/2005/Atom"}
@@ -40,7 +42,30 @@ def _strip_html(text: str) -> str:
     return stripper.get_text()
 
 
-def _search_semantic_scholar(query: str, max_results: int = 10, api_key: str = "") -> List[Dict]:
+def _get_with_retry(url: str, **kwargs) -> httpx.Response:
+    last_error = None
+    for attempt in range(MAX_NETWORK_ATTEMPTS):
+        try:
+            resp = httpx.get(url, **kwargs)
+            if resp.status_code in {429, 500, 502, 503, 504} and attempt < MAX_NETWORK_ATTEMPTS - 1:
+                retry_after = resp.headers.get("retry-after")
+                wait = float(retry_after) if retry_after and retry_after.isdigit() else 1.5 + attempt
+                time.sleep(min(wait, 5.0))
+                continue
+            resp.raise_for_status()
+            return resp
+        except Exception as exc:
+            last_error = exc
+            if attempt < MAX_NETWORK_ATTEMPTS - 1:
+                time.sleep(1.0 + attempt)
+    raise last_error
+
+
+def _search_semantic_scholar(
+    query: str,
+    max_results: int = 10,
+    api_key: str = "",
+) -> Tuple[List[Dict], str]:
     """Search Semantic Scholar API."""
     headers = {}
     if api_key:
@@ -53,7 +78,7 @@ def _search_semantic_scholar(query: str, max_results: int = 10, api_key: str = "
     }
 
     try:
-        resp = httpx.get(
+        resp = _get_with_retry(
             "https://api.semanticscholar.org/graph/v1/paper/search",
             params=params,
             headers=headers,
@@ -77,13 +102,13 @@ def _search_semantic_scholar(query: str, max_results: int = 10, api_key: str = "
                 "citations": paper.get("citationCount", 0),
                 "source": "semantic_scholar",
             })
-        return results
+        return results, ""
     except Exception as e:
         logger.warning("Semantic Scholar search failed: %s", e)
-        return []
+        return [], f"semantic_scholar failed: {type(e).__name__}: {e}"
 
 
-def _search_arxiv(query: str, max_results: int = 10) -> List[Dict]:
+def _search_arxiv(query: str, max_results: int = 10) -> Tuple[List[Dict], str]:
     """Search arXiv API."""
     params = {
         "search_query": f"all:{query}",
@@ -94,7 +119,7 @@ def _search_arxiv(query: str, max_results: int = 10) -> List[Dict]:
     }
 
     try:
-        resp = httpx.get(
+        resp = _get_with_retry(
             "https://export.arxiv.org/api/query",
             params=params,
             timeout=HTTP_TIMEOUT,
@@ -145,13 +170,13 @@ def _search_arxiv(query: str, max_results: int = 10) -> List[Dict]:
                 "citations": None,
                 "source": "arxiv",
             })
-        return results
+        return results, ""
     except Exception as e:
         logger.warning("arXiv search failed: %s", e)
-        return []
+        return [], f"arxiv failed: {type(e).__name__}: {e}"
 
 
-def _search_crossref(query: str, max_results: int = 10) -> List[Dict]:
+def _search_crossref(query: str, max_results: int = 10) -> Tuple[List[Dict], str]:
     """Search Crossref API."""
     params = {
         "query": query,
@@ -160,7 +185,7 @@ def _search_crossref(query: str, max_results: int = 10) -> List[Dict]:
     }
 
     try:
-        resp = httpx.get(
+        resp = _get_with_retry(
             "https://api.crossref.org/works",
             params=params,
             timeout=HTTP_TIMEOUT,
@@ -202,10 +227,10 @@ def _search_crossref(query: str, max_results: int = 10) -> List[Dict]:
                 "citations": item.get("is-referenced-by-count", 0),
                 "source": "crossref",
             })
-        return results
+        return results, ""
     except Exception as e:
         logger.warning("Crossref search failed: %s", e)
-        return []
+        return [], f"crossref failed: {type(e).__name__}: {e}"
 
 
 def literature_search(args: Dict[str, Any]) -> str:
@@ -219,25 +244,35 @@ def literature_search(args: Dict[str, Any]) -> str:
         return json.dumps({"error": "query is required"}, ensure_ascii=False)
 
     max_results = args.get("max_results", 10)
-    sources = args.get("sources", ["semantic_scholar"])
+    sources = args.get("sources") or ["crossref", "semantic_scholar", "arxiv"]
 
     all_results = []
     seen_titles = set()
+    warnings = []
+
+    if "crossref" in sources:
+        results, warning = _search_crossref(query, max_results)
+        if warning:
+            warnings.append(warning)
+        for r in results:
+            if r["title"] not in seen_titles:
+                all_results.append(r)
+                seen_titles.add(r["title"])
 
     if "semantic_scholar" in sources:
-        for r in _search_semantic_scholar(query, max_results):
+        results, warning = _search_semantic_scholar(query, max_results)
+        if warning:
+            warnings.append(warning)
+        for r in results:
             if r["title"] not in seen_titles:
                 all_results.append(r)
                 seen_titles.add(r["title"])
 
     if "arxiv" in sources:
-        for r in _search_arxiv(query, max_results):
-            if r["title"] not in seen_titles:
-                all_results.append(r)
-                seen_titles.add(r["title"])
-
-    if "crossref" in sources:
-        for r in _search_crossref(query, max_results):
+        results, warning = _search_arxiv(query, max_results)
+        if warning:
+            warnings.append(warning)
+        for r in results:
             if r["title"] not in seen_titles:
                 all_results.append(r)
                 seen_titles.add(r["title"])
@@ -247,6 +282,8 @@ def literature_search(args: Dict[str, Any]) -> str:
     return json.dumps({
         "query": query,
         "total": len(all_results),
+        "sources": sources,
+        "warnings": warnings,
         "papers": all_results,
     }, ensure_ascii=False)
 
@@ -283,7 +320,7 @@ def register_research_tools(registry):
                         ],
                     },
                     "description": "Databases to search",
-                    "default": ["semantic_scholar"],
+                    "default": ["crossref", "semantic_scholar", "arxiv"],
                 },
             },
             "required": ["query"],

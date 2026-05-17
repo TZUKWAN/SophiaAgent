@@ -172,6 +172,7 @@ sophia exec      Single-shot prompt execution
 sophia tools     List or call tools
 sophia serve     Start server mode
 sophia integrate Auto-register with Claude Code and Codex
+sophia doctor    Check installation, tools, config, and network
 sophia web       Start the web UI
 ```
 
@@ -184,10 +185,35 @@ sophia --workspace . chat
 sophia chat --session SESSION_ID
 sophia exec --json "分析这个研究问题适合什么方法"
 sophia tools list --json
+sophia doctor
+sophia doctor --network
 sophia integrate --auto
 sophia --workspace . web --host 127.0.0.1 --port 8080
 sophia web --host 127.0.0.1 --port 8080
 ```
+
+## Health Check
+
+After installation, run:
+
+```bash
+sophia doctor
+```
+
+This checks Python version, required dependencies, workspace read/write access,
+core file/document tools, model configuration, and local Codex/Claude command
+availability. Network checks are optional because external services may rate
+limit or be blocked by local proxy/firewall settings:
+
+```bash
+sophia doctor --network
+```
+
+`sophia doctor --fix` applies safe fixes when possible, such as using a detected
+local Ollama/OpenAI-compatible endpoint. If no model endpoint or API key exists,
+SophiaAgent can still use local tools, read workspace documents, and run doctor,
+but chat generation requires a real model provider. In that case SophiaAgent now
+returns a clear setup message instead of crashing on first use.
 
 ## Codex and Claude Code Integration
 

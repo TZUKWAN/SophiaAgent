@@ -960,6 +960,25 @@ def cmd_integrate(args):
         sys.exit(exit_code)
 
 
+def cmd_doctor(args):
+    """Run installation and runtime health checks."""
+    from sophia.doctor import render_report, run_doctor
+
+    config = Config.load(args.config, workspace=args.workspace)
+    report = run_doctor(
+        config,
+        network=args.network,
+        fix=args.fix,
+        config_path=args.config,
+    )
+    if args.json:
+        print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(render_report(report))
+    if not report.ok and args.strict:
+        sys.exit(1)
+
+
 def cmd_web(args):
     """Start SophiaAgent web UI server."""
     install_process_lifecycle_hooks()
@@ -1183,6 +1202,16 @@ def main():
         help="Alias for the default automatic detection mode",
     )
     p_integrate.set_defaults(func=cmd_integrate)
+
+    p_doctor = subparsers.add_parser(
+        "doctor",
+        help="Check SophiaAgent installation, configuration, tools, and network",
+    )
+    p_doctor.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    p_doctor.add_argument("--network", action="store_true", help="Check external network services")
+    p_doctor.add_argument("--fix", action="store_true", help="Apply safe automatic fixes when possible")
+    p_doctor.add_argument("--strict", action="store_true", help="Exit non-zero when a required check fails")
+    p_doctor.set_defaults(func=cmd_doctor)
 
     p_web = subparsers.add_parser("web", help="Start web UI")
     p_web.add_argument("--port", type=int, default=8080)

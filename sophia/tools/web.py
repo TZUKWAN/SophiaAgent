@@ -2,6 +2,7 @@
 
 import json
 import logging
+import time
 from html.parser import HTMLParser
 from typing import Any, Dict, List
 from urllib.parse import unquote
@@ -10,7 +11,25 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-HTTP_TIMEOUT = 30.0
+HTTP_TIMEOUT = 20.0
+MAX_NETWORK_ATTEMPTS = 2
+
+
+def _get_with_retry(url: str, **kwargs) -> httpx.Response:
+    last_error = None
+    for attempt in range(MAX_NETWORK_ATTEMPTS):
+        try:
+            resp = httpx.get(url, **kwargs)
+            if resp.status_code in {429, 500, 502, 503, 504} and attempt < MAX_NETWORK_ATTEMPTS - 1:
+                time.sleep(1.5 + attempt)
+                continue
+            resp.raise_for_status()
+            return resp
+        except Exception as exc:
+            last_error = exc
+            if attempt < MAX_NETWORK_ATTEMPTS - 1:
+                time.sleep(1.0 + attempt)
+    raise last_error
 
 
 class _HTMLStripper(HTMLParser):
@@ -46,14 +65,26 @@ def web_search(args: Dict[str, Any]) -> str:
     max_results = args.get("max_results", 10)
 
     try:
-        resp = httpx.get(
+        endpoints = [
             "https://html.duckduckgo.com/html/",
-            params={"q": query},
-            headers={"User-Agent": "Mozilla/5.0 (compatible; SophiaAgent/0.1.0)"},
-            timeout=HTTP_TIMEOUT,
-            follow_redirects=True,
-        )
-        resp.raise_for_status()
+            "https://lite.duckduckgo.com/lite/",
+        ]
+        last_error = None
+        resp = None
+        for endpoint in endpoints:
+            try:
+                resp = _get_with_retry(
+                    endpoint,
+                    params={"q": query},
+                    headers={"User-Agent": "Mozilla/5.0 (compatible; SophiaAgent/0.1.0)"},
+                    timeout=HTTP_TIMEOUT,
+                    follow_redirects=True,
+                )
+                break
+            except Exception as exc:
+                last_error = exc
+        if resp is None:
+            raise last_error
 
         results = []
         from html.parser import HTMLParser
@@ -115,11 +146,15 @@ def web_search(args: Dict[str, Any]) -> str:
         return json.dumps({
             "query": query,
             "total": len(results),
+            "warnings": [] if results else ["No search results parsed from provider response."],
             "results": results,
         }, ensure_ascii=False)
     except Exception as e:
         logger.warning("Web search failed: %s", e)
-        return json.dumps({"error": f"Search failed: {e}"}, ensure_ascii=False)
+        return json.dumps({
+            "error": f"Search failed: {type(e).__name__}: {e}",
+            "suggestion": "Check network/proxy settings or run `sophia doctor --network`.",
+        }, ensure_ascii=False)
 
 
 def web_extract(args: Dict[str, Any]) -> str:
@@ -134,7 +169,7 @@ def web_extract(args: Dict[str, Any]) -> str:
     max_length = args.get("max_length", 5000)
 
     try:
-        resp = httpx.get(
+        resp = _get_with_retry(
             url,
             headers={
                 "User-Agent": (
@@ -151,8 +186,6 @@ def web_extract(args: Dict[str, Any]) -> str:
             timeout=HTTP_TIMEOUT,
             follow_redirects=True,
         )
-        resp.raise_for_status()
-
         class _ContentExtractor(HTMLParser):
             """Extract visible text from HTML, skipping script/style."""
             def __init__(self):
@@ -201,7 +234,10 @@ def web_extract(args: Dict[str, Any]) -> str:
         }, ensure_ascii=False)
     except Exception as e:
         logger.warning("Web extract failed: %s", e)
-        return json.dumps({"error": f"Extraction failed: {e}"}, ensure_ascii=False)
+        return json.dumps({
+            "error": f"Extraction failed: {type(e).__name__}: {e}",
+            "suggestion": "Check network/proxy settings or try a different URL.",
+        }, ensure_ascii=False)
 
 
 def register_web_tools(registry):

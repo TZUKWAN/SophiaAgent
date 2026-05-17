@@ -1,6 +1,7 @@
 """Configuration management for SophiaAgent."""
 
 import os
+import socket
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
@@ -167,6 +168,10 @@ class Config:
             config.model.base_url = os.environ["SOPHIA_BASE_URL"]
             config.model.api_key = os.environ.get("SOPHIA_API_KEY", "")
             config.model.name = os.environ.get("SOPHIA_MODEL", config.model.name)
+        elif cls._local_port_open("127.0.0.1", 11434):
+            config.model.base_url = "http://127.0.0.1:11434/v1"
+            config.model.api_key = "ollama"
+            config.model.name = os.environ.get("SOPHIA_MODEL", "llama3.1")
 
         home = Path.home()
         config.session.db_path = str(home / ".sophia-agent" / "sessions.db")
@@ -174,6 +179,14 @@ class Config:
         Path(config.session.workspace).mkdir(parents=True, exist_ok=True)
 
         return config
+
+    @staticmethod
+    def _local_port_open(host: str, port: int) -> bool:
+        try:
+            with socket.create_connection((host, port), timeout=0.3):
+                return True
+        except OSError:
+            return False
 
     @classmethod
     def load(cls, path: Optional[str] = None, workspace: Optional[str] = None) -> "Config":
@@ -304,6 +317,14 @@ class Config:
         env_model = os.environ.get("SOPHIA_MODEL")
         if env_model:
             config.model.name = env_model
+        if (
+            config.model.provider == "openai-compat"
+            and (not config.model.base_url or not config.model.api_key)
+            and cls._local_port_open("127.0.0.1", 11434)
+        ):
+            config.model.base_url = "http://127.0.0.1:11434/v1"
+            config.model.api_key = "ollama"
+            config.model.name = os.environ.get("SOPHIA_MODEL", config.model.name or "llama3.1")
 
         env_workspace = os.environ.get("SOPHIA_WORKSPACE")
         if workspace:

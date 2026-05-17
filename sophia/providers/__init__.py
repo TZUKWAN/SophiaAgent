@@ -2,6 +2,7 @@
 
 from sophia.providers.base import BaseProvider, ProviderResponse, ToolCall
 from sophia.providers.openai_compat import OpenAICompatProvider
+from sophia.providers.unconfigured import UnconfiguredProvider
 
 
 def create_provider(config) -> BaseProvider:
@@ -9,12 +10,16 @@ def create_provider(config) -> BaseProvider:
     provider_type = config.model.provider
 
     if provider_type == "openai-compat":
+        if not config.model.base_url or not config.model.api_key:
+            return UnconfiguredProvider()
         return OpenAICompatProvider(
             base_url=config.model.base_url,
             api_key=config.model.api_key,
             model=config.model.name,
         )
     elif provider_type == "anthropic":
+        if not config.model.api_key:
+            return UnconfiguredProvider()
         from sophia.providers.anthropic import AnthropicProvider
         return AnthropicProvider(
             api_key=config.model.api_key,
@@ -30,4 +35,5 @@ __all__ = [
     "ProviderResponse",
     "ToolCall",
     "create_provider",
+    "UnconfiguredProvider",
 ]

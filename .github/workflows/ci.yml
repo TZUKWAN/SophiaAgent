@@ -24,6 +24,11 @@ jobs:
           sophia/lifecycle.py
           sophia/integrations.py
           sophia/workspace_context.py
+          sophia/doctor.py
+          sophia/tools/web.py
+          sophia/tools/research.py
+          sophia/providers/__init__.py
+          sophia/providers/unconfigured.py
           run_web.py
           tests/test_swarm_agent_integration.py
           tests/test_swarm_analyzer.py
@@ -41,6 +46,9 @@ jobs:
           tests/test_integrations.py
           tests/test_mcp_integration.py
           tests/test_workspace_context.py
+          tests/test_doctor.py
+          tests/test_network_tools.py
+          tests/test_provider_fallback.py
           --select E,F,W
           --ignore E501,E731
 
