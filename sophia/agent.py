@@ -65,6 +65,7 @@ from sophia.skills.factory import SkillFactory
 from sophia.snapshot import SnapshotManager
 from sophia.subagent import SubAgentManager, register_subagent_tools
 from sophia.swarm import FilteredToolRegistry, SwarmOrchestrator
+from sophia.task_harness import build_task_harness_prompt, is_empirical_request
 from sophia.tools.analysis import register_analysis_tools
 from sophia.tools.citation import register_citation_tools
 from sophia.tools.data_collection import register_data_collection_tools
@@ -435,8 +436,15 @@ class SophiaAgent:
             user_message,
             workspace_has_evidence=workspace_context.has_evidence,
         )
+        task_harness = build_task_harness_prompt(
+            user_message,
+            workspace_has_evidence=workspace_context.has_evidence,
+            empirical_preflight=self._build_empirical_preflight(user_message),
+        )
         if not block:
             parts = [user_message]
+            if task_harness:
+                parts.append(task_harness)
             if reference_notice:
                 parts.append(reference_notice)
             if paper_contract:
@@ -461,9 +469,20 @@ class SophiaAgent:
         parts = [user_message, block, "\n".join(requirements)]
         if reference_notice:
             parts.append(reference_notice)
+        if task_harness:
+            parts.append(task_harness)
         if paper_contract:
             parts.append(paper_contract)
         return "\n\n".join(parts)
+
+    def _build_empirical_preflight(self, user_message: str) -> str:
+        if not is_empirical_request(user_message):
+            return ""
+        try:
+            return self.empirical_workflow.plan({"research_question": user_message})
+        except Exception as exc:
+            logger.warning("Empirical preflight failed: %s", exc)
+            return ""
 
     def _append_generated_document_path(self, user_message: str, final_text: str) -> str:
         final_text = append_quality_report_if_needed(user_message, final_text)

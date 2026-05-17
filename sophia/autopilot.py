@@ -60,9 +60,12 @@ class AutopilotRouter:
         if cls.is_research_intent(user_message):
             hints.append(
                 "[Autopilot] User is asking a research question. "
-                "For empirical/quantitative/causal/data-analysis work, first call empirical_workflow_plan; "
-                "if real data and required variables are available, call empirical_workflow_run; "
-                "then use methodology_advise and the recommended specialized research tools to synthesize real results. "
+                "For empirical, quantitative, causal, or data-analysis work, first call "
+                "empirical_workflow_plan; if real data and required variables are available, "
+                "call empirical_workflow_run; then use methodology_advise and the recommended "
+                "specialized research tools to synthesize real results. Run credibility checks: "
+                "data contract, diagnostics, identification assumptions, robustness, sensitivity, "
+                "skipped-check reasons, and artifact export. Do not fabricate any result. "
                 "If the workflow repeats, consider creating a skill."
             )
 
@@ -184,7 +187,8 @@ You have access to a full research tool suite. When the user asks a research que
 
 1. **Advise** -- Call `methodology_advise` with the user's research question and data description to get ranked method recommendations.
 2. **Execute** -- Based on the recommendation, call the appropriate research tools in sequence (e.g., `research_load_data` → `research_did` → `research_plot` → `research_export_report`).
-3. **Synthesize** -- Provide an APA-style interpretation of the results. Include effect sizes, confidence intervals, and practical significance.
+3. **Verify** -- Run credibility checks before interpretation: data contract, missingness, outliers, sample construction, assumptions, robustness, sensitivity, and skipped-check reasons.
+4. **Synthesize** -- Provide an APA-style interpretation of the results. Include effect sizes, confidence intervals, practical significance, limitations, and artifact paths. Never invent missing empirical results.
 
 ### When to use internal mechanisms
 - **Goal**: If the task has multiple steps or takes multiple turns, call `goal_create` first.
