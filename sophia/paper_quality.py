@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from typing import Dict, List
-
 
 MIN_BODY_CHARS = 6500
 MIN_REFERENCES = 20
@@ -20,11 +19,13 @@ paper body in this answer, not a short outline and not a placeholder.
 Reference priority:
 1. If the user provided references, uploaded papers, or workspace literature,
    prioritize those sources and cite them first.
-2. If the user did not provide references, first prompt the user to provide
-   their preferred reference list or workspace papers.
-3. Only when the user has no references available, or explicitly asks Sophia
-   to search independently, use literature_search, web_search, citation tools,
-   or other verifiable sources to supplement references.
+2. If the user did not provide references, first remind the user that Sophia can
+   use their preferred references, then continue with workspace evidence or
+   verifiable search when the current task already asks Sophia to complete the
+   paper now. Do not stop and push the work back to the user.
+3. Only when the user has no references available, or explicitly asks Sophia to
+   search independently, use literature_search, web_search, citation tools, or
+   other verifiable sources to supplement references.
 4. Never replace user-provided references with searched references unless the
    user-provided source is unusable, duplicated, or unverifiable. Explain that
    limitation clearly.
@@ -57,8 +58,12 @@ Minimum deliverables:
     level headings, use only first-level and second-level headings.
 11. Before the final answer ends, internally verify the minimum length,
     reference count, table count, figure count, citation consistency, and
-    language style. If any item cannot be satisfied because evidence is missing,
-    say exactly what is missing instead of fabricating it.
+    language style. If any item is below the threshold, continue expanding,
+    adding verified references, and adding meaningful tables or figures before
+    finalizing. Only report an irreducible evidence gap after attempting
+    self-remediation with all available workspace and tool evidence.
+12. If the user asks for Word/DOCX, the final deliverable must be exported as
+    Word/DOCX. Do not treat Markdown as the final requested deliverable.
 """
 
 
@@ -74,8 +79,26 @@ class PaperQualityReport:
 
 def is_paper_generation_request(text: str) -> bool:
     lowered = text.lower()
-    write_terms = ["写", "生成", "撰写", "成文", "write", "draft", "generate"]
-    paper_terms = ["论文", "文章", "paper", "article", "文稿"]
+    write_terms = [
+        "写",
+        "撰写",
+        "生成",
+        "起草",
+        "成文",
+        "write",
+        "draft",
+        "generate",
+    ]
+    paper_terms = [
+        "论文",
+        "文章",
+        "研究报告",
+        "综述",
+        "paper",
+        "article",
+        "manuscript",
+        "review",
+    ]
     return any(term in lowered for term in write_terms) and any(
         term in lowered for term in paper_terms
     )
@@ -89,9 +112,16 @@ def build_paper_generation_contract(user_message: str) -> str:
 
 def has_user_supplied_references(text: str) -> bool:
     lowered = text.lower()
-    if any(term in lowered for term in ["参考文献如下", "参考文献：", "references:", "bibliography"]):
+    reference_headings = [
+        "参考文献如下",
+        "参考文献：",
+        "参考文献:",
+        "references:",
+        "bibliography",
+    ]
+    if any(term in lowered for term in reference_headings):
         return True
-    numbered_refs = re.findall(r"(?m)^\s*(\[\d+\]|\d+[\.\)]|\-\s+).{12,}", text)
+    numbered_refs = re.findall(r"(?m)^\s*(\[\d+\]|\d+[\.\)]|-\s+).{12,}", text)
     if len(numbered_refs) >= 2:
         return True
     return bool(re.search(r"(?m).{2,}(\(\d{4}[a-z]?\)|\d{4}).{8,}", text))
@@ -108,21 +138,22 @@ def build_reference_priority_notice(
         return (
             "[Reference priority notice]\n"
             "The user has supplied references in the request. Prioritize these references. "
-            "Use search only to verify, complete metadata, or supplement gaps after the user-provided "
-            "references have been used."
+            "Use search only to verify, complete metadata, or supplement gaps after the "
+            "user-provided references have been used."
         )
     if workspace_has_evidence:
         return (
             "[Reference priority notice]\n"
-            "Workspace literature has been read. Prioritize the workspace papers and documents. "
-            "Use search only to verify metadata or supplement unavoidable gaps."
+            "Workspace literature has been read. Prioritize the workspace papers and "
+            "documents. Use search only to verify metadata or supplement unavoidable gaps."
         )
     return (
         "[Reference priority notice]\n"
-        "Before independently searching for references, ask the user to provide their preferred "
-        "reference list or workspace papers. If the user has no references available or explicitly "
-        "asks Sophia to search, then use literature_search, web_search, citation tools, or other "
-        "verifiable sources. Do not fabricate references."
+        "Before independently searching for references, tell the user they may provide "
+        "preferred references. "
+        "If the current request asks Sophia to complete the paper now and no references were "
+        "provided, continue using workspace evidence first and verifiable search second. "
+        "Do not fabricate references and do not stop merely to ask the user to do the work."
     )
 
 
@@ -170,7 +201,7 @@ def append_quality_report_if_needed(user_message: str, content: str) -> str:
         f"- 图片或图示数量：{report.figure_count}，最低要求 {MIN_FIGURES}",
     ]
     lines.extend(f"- {issue}" for issue in report.issues)
-    lines.append("请继续扩写、补足真实参考文献、补足表格和图示后再视为完成。")
+    lines.append("Sophia 应继续扩写、补足真实参考文献、表格和图示后再视为完成。")
     return content.rstrip() + "\n" + "\n".join(lines)
 
 
@@ -179,7 +210,7 @@ def quality_report_dict(content: str) -> Dict:
 
 
 def _split_body_and_references(content: str) -> tuple[str, str]:
-    pattern = re.compile(r"(?im)^#{1,6}\s*(参考文献|references)\s*$|^(参考文献|References)\s*$")
+    pattern = re.compile(r"(?im)^\s*(?:#{1,6}\s*)?(参考文献|references)\s*$")
     match = pattern.search(content)
     if not match:
         return content, ""
@@ -201,7 +232,7 @@ def _count_references(refs: str) -> int:
     lines = [line.strip() for line in refs.splitlines() if line.strip()]
     count = 0
     for line in lines:
-        if re.match(r"^(\[\d+\]|\d+[\.\)]|\-\s+)", line):
+        if re.match(r"^(\[\d+\]|\d+[\.\)]|-\s+)", line):
             count += 1
         elif re.search(r"\(\d{4}[a-z]?\)|\d{4}", line) and len(line) >= 18:
             count += 1
@@ -209,13 +240,13 @@ def _count_references(refs: str) -> int:
 
 
 def _count_tables(text: str) -> int:
-    table_captions = len(re.findall(r"(?im)^(表\s*\d+|Table\s*\d+)", text))
+    table_captions = len(re.findall(r"(?im)^\s*(表|table)\s*\d+", text))
     markdown_tables = len(re.findall(r"(?m)^\s*\|.+\|\s*$\n^\s*\|[\s:\-\|]+\|\s*$", text))
     return max(table_captions, markdown_tables)
 
 
 def _count_figures(text: str) -> int:
     markdown_images = len(re.findall(r"!\[[^\]]*\]\([^)]+\)", text))
-    figure_captions = len(re.findall(r"(?im)^(图\s*\d+|Figure\s*\d+)", text))
+    figure_captions = len(re.findall(r"(?im)^\s*(图|figure)\s*\d+", text))
     mermaid_blocks = len(re.findall(r"```mermaid", text, flags=re.I))
     return max(figure_captions, markdown_images + mermaid_blocks)

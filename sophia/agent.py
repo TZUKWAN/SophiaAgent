@@ -8,79 +8,79 @@ Skills, Learning, Browser, Snapshot, Trajectory.
 import logging
 from typing import Any, Dict, List, Optional
 
+from sophia.autopilot import AutopilotOrchestrator
 from sophia.config import Config
-from sophia.prompts.system import build_system_prompt
-from sophia.providers.base import BaseProvider
-from sophia.providers import create_provider
-from sophia.tools.registry import ToolRegistry
-from sophia.tools.files import register_file_tools
-from sophia.tools.research import register_research_tools
-from sophia.tools.citation import register_citation_tools
-from sophia.tools.writing import register_writing_tools
-from sophia.tools.analysis import register_analysis_tools
-from sophia.tools.web import register_web_tools
-from sophia.tools.review import register_review_tools
-from sophia.tools.data_collection import register_data_collection_tools
-from sophia.tools.swarm import register_swarm_tools
-
-from sophia.hooks import HookEvent, HookManager
+from sophia.context import ContextCompressor
+from sophia.credentials import CredentialPool
+from sophia.document_delivery import requested_output_format, save_generated_docx
+from sophia.experiment import ExperimentManager, register_experiment_tools
 from sophia.goal import GoalManager, register_goal_tools
-from sophia.subagent import SubAgentManager, register_subagent_tools
-from sophia.swarm import FilteredToolRegistry, SwarmOrchestrator
+from sophia.guardrails import ToolGuardrails
+from sophia.hooks import HookEvent, HookManager
+from sophia.kanban import KanbanBoard, register_kanban_tools
+from sophia.learning import LearningManager
 from sophia.loop import LoopManager, register_loop_tools
 from sophia.memory import MemoryManager, register_memory_tools
-from sophia.context import ContextCompressor
-from sophia.autopilot import AutopilotOrchestrator
-from sophia.credentials import CredentialPool
-from sophia.recovery import RecoveryManager
-from sophia.guardrails import ToolGuardrails
-from sophia.scheduler import CronScheduler
-from sophia.kanban import KanbanBoard, register_kanban_tools
+from sophia.paper_quality import (
+    append_quality_report_if_needed,
+    build_paper_generation_contract,
+    build_reference_priority_notice,
+)
 from sophia.plugins import PluginManager
-from sophia.security import SecurityManager
-from sophia.skills import SkillManager
-from sophia.skills.factory import SkillFactory
-from sophia.learning import LearningManager
-from sophia.snapshot import SnapshotManager
-from sophia.trajectory import TrajectoryRecorder
-from sophia.experiment import ExperimentManager, register_experiment_tools
-
-# Research method engines
-from sophia.research.statistics import StatisticalEngine
-from sophia.research.design import ResearchDesignEngine
-from sophia.research.causal import CausalEngine
-from sophia.research.survey import SurveyEngine
-from sophia.research.qualitative import QualitativeEngine
-from sophia.research.meta_analysis import MetaAnalysisEngine
-from sophia.research.computational import ComputationalEngine
-from sophia.research.ml import MLEngine
-from sophia.research.llm import LLMEngine
-from sophia.research.visualization import VisualizationEngine
-from sophia.research.pipeline import ExperimentPipeline
-from sophia.research.workspace_guard import WorkspaceGuard
-from sophia.research.result_store import ResultStore
-from sophia.research.seed import GlobalSeed
+from sophia.prompts.system import build_system_prompt
+from sophia.providers import create_provider
+from sophia.providers.base import BaseProvider
+from sophia.recovery import RecoveryManager
 from sophia.research.advisor import MethodologyAdvisor
-from sophia.research.latex_exporter import LaTeXReporter
-from sophia.research.empirical_workflow import EmpiricalWorkflowEngine
-from sophia.research.register import register_method_tools
+from sophia.research.causal import CausalEngine
+from sophia.research.computational import ComputationalEngine
+from sophia.research.design import ResearchDesignEngine
+from sophia.research.discovery.dependency_manager import DependencyManager
+from sophia.research.discovery.method_builder import MethodBuilder
 
 # Self-evolving discovery system
 from sophia.research.discovery.method_catalog import MethodCatalog
 from sophia.research.discovery.method_searcher import MethodSearcher
-from sophia.research.discovery.method_builder import MethodBuilder
-from sophia.research.discovery.dependency_manager import DependencyManager
 from sophia.research.discovery.register import register_discovery_tools
+from sophia.research.empirical_workflow import EmpiricalWorkflowEngine
+from sophia.research.latex_exporter import LaTeXReporter
+from sophia.research.llm import LLMEngine
+from sophia.research.meta_analysis import MetaAnalysisEngine
+from sophia.research.ml import MLEngine
+from sophia.research.pipeline import ExperimentPipeline
+from sophia.research.qualitative import QualitativeEngine
+from sophia.research.register import register_method_tools
+from sophia.research.result_store import ResultStore
+from sophia.research.seed import GlobalSeed
+
+# Research method engines
+from sophia.research.statistics import StatisticalEngine
+from sophia.research.survey import SurveyEngine
+from sophia.research.visualization import VisualizationEngine
+from sophia.research.workspace_guard import WorkspaceGuard
+from sophia.scheduler import CronScheduler
+from sophia.security import SecurityManager
+from sophia.skills import SkillManager
+from sophia.skills.factory import SkillFactory
+from sophia.snapshot import SnapshotManager
+from sophia.subagent import SubAgentManager, register_subagent_tools
+from sophia.swarm import FilteredToolRegistry, SwarmOrchestrator
+from sophia.tools.analysis import register_analysis_tools
+from sophia.tools.citation import register_citation_tools
+from sophia.tools.data_collection import register_data_collection_tools
+from sophia.tools.files import register_file_tools
+from sophia.tools.registry import ToolRegistry
+from sophia.tools.research import register_research_tools
+from sophia.tools.review import register_review_tools
+from sophia.tools.swarm import register_swarm_tools
+from sophia.tools.web import register_web_tools
+from sophia.tools.writing import register_writing_tools
+from sophia.trajectory import TrajectoryRecorder
 from sophia.workspace_context import (
     asks_for_paper_document,
     collect_workspace_context,
     iter_workspace_context_events,
     save_generated_markdown,
-)
-from sophia.paper_quality import (
-    append_quality_report_if_needed,
-    build_paper_generation_contract,
-    build_reference_priority_notice,
 )
 
 logger = logging.getLogger(__name__)
@@ -453,6 +453,11 @@ class SophiaAgent:
                 "4. 按用户要求生成完整论文正文，严格控制标题层级；不要自行添加三级标题。",
                 "5. 论文完成后，系统会自动保存 Markdown 文档；正文中仍需给出完整内容。",
             ])
+        if asks_for_paper_document(user_message):
+            requirements.append(
+                "6. If the user requests Word/DOCX, the final saved deliverable "
+                "must be Word/DOCX, not Markdown."
+            )
         parts = [user_message, block, "\n".join(requirements)]
         if reference_notice:
             parts.append(reference_notice)
@@ -462,6 +467,13 @@ class SophiaAgent:
 
     def _append_generated_document_path(self, user_message: str, final_text: str) -> str:
         final_text = append_quality_report_if_needed(user_message, final_text)
+        output_format = requested_output_format(user_message)
+        if output_format == "docx":
+            path = save_generated_docx(self.workspace, user_message, final_text)
+            if not path:
+                return final_text
+            return f"{final_text}\n\n---\n已自动生成 Word 文档：{path}"
+
         path = save_generated_markdown(self.workspace, user_message, final_text)
         if not path:
             return final_text

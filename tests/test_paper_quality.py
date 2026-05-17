@@ -5,6 +5,7 @@ from sophia.paper_quality import (
     build_reference_priority_notice,
     has_user_supplied_references,
     inspect_generated_paper,
+    is_paper_generation_request,
 )
 
 
@@ -15,6 +16,10 @@ def test_contract_injected_for_paper_request():
     assert "5 tables" in contract
     assert "8 figures" in contract
     assert "Reference priority" in contract
+
+
+def test_detects_chinese_paper_request():
+    assert is_paper_generation_request("请基于工作空间论文，写一篇生成式人工智能综述论文")
 
 
 def test_short_paper_fails_quality_gate():
@@ -80,3 +85,23 @@ def test_reference_notice_prioritizes_workspace_literature():
     )
     assert "Workspace literature has been read" in notice
     assert "Prioritize the workspace papers" in notice
+
+
+def test_counts_chinese_reference_heading_tables_and_figures():
+    content = "# 论文\n\n"
+    content += "正文" * 4000
+    content += "\n\n" + "\n\n".join(f"表 {idx} 表格标题" for idx in range(1, 6))
+    content += "\n\n" + "\n\n".join(f"图 {idx} 图示标题" for idx in range(1, 9))
+    content += "\n\n参考文献\n\n"
+    content += "\n".join(
+        f"{idx}. Author, A. ({2000 + idx}). Real article title. Journal Name."
+        for idx in range(1, 21)
+    )
+
+    report = inspect_generated_paper(content)
+
+    assert report.body_chars >= MIN_BODY_CHARS
+    assert report.reference_count == 20
+    assert report.table_count == 5
+    assert report.figure_count == 8
+    assert report.passed

@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Generator, Iterable, List, Optional
 
-
 TEXT_SUFFIXES = {".md", ".txt", ".tex", ".rst"}
 TABULAR_SUFFIXES = {".csv"}
 DOCX_SUFFIXES = {".docx"}
@@ -135,6 +134,10 @@ def needs_workspace_context(user_message: str) -> bool:
 
 def asks_for_paper_document(user_message: str) -> bool:
     text = user_message.lower()
+    write_terms = ["写", "撰写", "生成", "起草", "成文", "write", "draft", "generate"]
+    paper_terms = ["论文", "文章", "研究报告", "综述", "paper", "article", "manuscript", "review"]
+    if any(term in text for term in write_terms) and any(term in text for term in paper_terms):
+        return True
     return any(term in text for term in ["写", "生成", "撰写", "成文", "write", "draft"]) and any(
         term in text for term in ["论文", "文章", "paper", "article", "文稿"]
     )
