@@ -416,11 +416,18 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
 .message-content a { color: var(--primary); text-decoration: none; }
 .message-content a:hover { text-decoration: underline; }
 .message-content hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+.activity-stack {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.assistant-text:empty { display: none; }
 
 /* ═══ Tool Cards ══════════════════════════════ */
 
 .tool-card {
-    margin: 12px 0;
+    margin: 0;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;

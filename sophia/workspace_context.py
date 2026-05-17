@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Any, Dict, Generator, Iterable, List, Optional
 
 
 TEXT_SUFFIXES = {".md", ".txt", ".tex", ".rst"}
@@ -30,6 +30,7 @@ class WorkspaceContext:
     requested: bool
     evidences: List[WorkspaceEvidence]
     skipped: List[str]
+    total_candidates: int = 0
 
     @property
     def has_evidence(self) -> bool:
@@ -56,6 +57,8 @@ class WorkspaceContext:
         if self.skipped:
             lines.append("\n未读取或跳过的文件：")
             lines.extend(f"- {entry}" for entry in self.skipped[:20])
+            if len(self.skipped) > 20:
+                lines.append(f"- ... {len(self.skipped) - 20} more skipped files")
         return "\n".join(lines)
 
 
@@ -76,28 +79,81 @@ def asks_for_paper_document(user_message: str) -> bool:
 def collect_workspace_context(
     workspace: str,
     user_message: str,
-    *,
-    max_files: int = 8,
-    max_chars_per_file: int = 12000,
 ) -> WorkspaceContext:
+    final_context = WorkspaceContext(requested=False, evidences=[], skipped=[])
+    for event in iter_workspace_context_events(workspace, user_message):
+        if event["type"] == "workspace_context_complete":
+            final_context = event["context"]
+    return final_context
+
+
+def iter_workspace_context_events(
+    workspace: str,
+    user_message: str,
+) -> Generator[Dict[str, Any], None, None]:
     requested = needs_workspace_context(user_message)
     if not requested:
-        return WorkspaceContext(requested=False, evidences=[], skipped=[])
+        yield {
+            "type": "workspace_context_complete",
+            "context": WorkspaceContext(requested=False, evidences=[], skipped=[]),
+        }
+        return
 
     root = Path(workspace).expanduser().resolve()
-    candidates = _candidate_files(root)
+    candidates = list(_candidate_files(root))
     ranked = sorted(candidates, key=lambda path: _rank_file(path, user_message))
     evidences: List[WorkspaceEvidence] = []
     skipped: List[str] = []
-    for path in ranked:
-        if len(evidences) >= max_files:
-            break
-        evidence = _read_evidence(path, root, max_chars_per_file)
+    yield {
+        "type": "workspace_scan_start",
+        "workspace": str(root),
+        "total_files": len(ranked),
+    }
+    for index, path in enumerate(ranked, 1):
+        rel_path = _rel(path, root)
+        yield {
+            "type": "workspace_file_start",
+            "index": index,
+            "total": len(ranked),
+            "path": rel_path,
+            "suffix": path.suffix.lower(),
+        }
+        evidence = _read_evidence(path, root)
         if evidence.content:
             evidences.append(evidence)
+            yield {
+                "type": "workspace_file_done",
+                "index": index,
+                "total": len(ranked),
+                "path": rel_path,
+                "status": "read",
+                "chars": evidence.chars,
+                "warning": evidence.warning,
+            }
         else:
             skipped.append(f"{_rel(path, root)}: {evidence.warning or 'empty or unsupported'}")
-    return WorkspaceContext(requested=True, evidences=evidences, skipped=skipped)
+            yield {
+                "type": "workspace_file_done",
+                "index": index,
+                "total": len(ranked),
+                "path": rel_path,
+                "status": "skipped",
+                "chars": 0,
+                "warning": evidence.warning or "empty or unsupported",
+            }
+    context = WorkspaceContext(
+        requested=True,
+        evidences=evidences,
+        skipped=skipped,
+        total_candidates=len(candidates),
+    )
+    yield {
+        "type": "workspace_context_complete",
+        "context": context,
+        "read_files": len(evidences),
+        "skipped_files": len(skipped),
+        "total_files": len(ranked),
+    }
 
 
 def save_generated_markdown(workspace: str, user_message: str, content: str) -> Optional[str]:
@@ -144,7 +200,7 @@ def _rank_file(path: Path, user_message: str) -> tuple:
     return (score, -size, str(path))
 
 
-def _read_evidence(path: Path, root: Path, max_chars: int) -> WorkspaceEvidence:
+def _read_evidence(path: Path, root: Path) -> WorkspaceEvidence:
     suffix = path.suffix.lower()
     warning = ""
     try:
@@ -167,8 +223,6 @@ def _read_evidence(path: Path, root: Path, max_chars: int) -> WorkspaceEvidence:
 
     text = _clean_text(text)
     original_len = len(text)
-    if len(text) > max_chars:
-        text = text[:max_chars] + f"\n...[已截断，原文 {original_len} 字符]"
     return WorkspaceEvidence(_rel(path, root), kind, original_len, text, warning)
 
 
@@ -188,9 +242,9 @@ def _read_pdf(path: Path) -> tuple[str, str]:
         return "", "PDF reader dependency is not installed; install PyMuPDF to read PDFs."
     parts: List[str] = []
     with fitz.open(str(path)) as doc:
-        for page in doc[:20]:
+        for page in doc:
             parts.append(page.get_text("text"))
-        warning = "Only the first 20 PDF pages were read." if len(doc) > 20 else ""
+        warning = ""
     return "\n".join(parts), warning
 
 

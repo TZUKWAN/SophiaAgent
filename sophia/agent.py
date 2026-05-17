@@ -74,6 +74,7 @@ from sophia.research.discovery.register import register_discovery_tools
 from sophia.workspace_context import (
     asks_for_paper_document,
     collect_workspace_context,
+    iter_workspace_context_events,
     save_generated_markdown,
 )
 from sophia.paper_quality import (
@@ -577,13 +578,23 @@ class SophiaAgent:
         if history is None:
             history = []
 
-        workspace_context = collect_workspace_context(self.workspace, user_message)
+        workspace_context = None
+        for event in iter_workspace_context_events(self.workspace, user_message):
+            if event["type"] == "workspace_context_complete":
+                workspace_context = event["context"]
+                break
+            yield event
+        if workspace_context is None:
+            workspace_context = collect_workspace_context(self.workspace, user_message)
         effective_user_message = self._inject_workspace_context(user_message, workspace_context)
         if workspace_context.requested:
             yield {
                 "type": "tool_call",
                 "name": "workspace_context_read",
-                "arguments": {"workspace": self.workspace, "max_files": 8},
+                "arguments": {
+                    "workspace": self.workspace,
+                    "total_files": workspace_context.total_candidates,
+                },
             }
             yield {
                 "type": "tool_result",

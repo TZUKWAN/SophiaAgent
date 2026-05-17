@@ -8,6 +8,7 @@ def test_stream_events_for_swarm_path():
     types = [event["type"] for event in events]
     assert types[0] == "swarm_analyze"
     assert "swarm_plan" in types
+    assert "swarm_agent_start" in types
     assert "swarm_done" in types
     assert any(event["type"] == "token" and "agent-result" in event["content"] for event in events)
 

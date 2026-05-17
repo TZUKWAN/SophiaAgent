@@ -87,8 +87,9 @@ def test_stream_workspace_request_emits_context_tool_card(config, tmp_path):
 
     events = list(agent.run_stream("基于工作空间中的论文写论文", allow_swarm=False))
 
-    assert events[0]["type"] == "tool_call"
-    assert events[0]["name"] == "workspace_context_read"
+    assert events[0]["type"] == "workspace_scan_start"
+    assert any(event["type"] == "workspace_file_done" for event in events)
+    assert any(event.get("name") == "workspace_context_read" for event in events)
     assert events[-1]["type"] == "done"
     assert "single-response" in events[-1]["response"]
     assert ".sophia" in events[-1]["response"]

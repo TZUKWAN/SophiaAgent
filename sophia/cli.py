@@ -163,6 +163,89 @@ class SophiaRenderer:
             self._live = None
         self._text_parts = []
 
+    def render_workspace_event(self, event: Dict):
+        self.flush_text()
+        etype = event.get("type")
+        if etype == "workspace_scan_start":
+            self.console.print(
+                Text(
+                    f"Workspace scan: {event.get('total_files', 0)} supported files found",
+                    style=SophiaTheme.BRAND,
+                )
+            )
+        elif etype == "workspace_file_start":
+            self.console.print(
+                Text(
+                    f"  [{event.get('index')}/{event.get('total')}] reading {event.get('path')}",
+                    style="dim",
+                )
+            )
+        elif etype == "workspace_file_done":
+            status = event.get("status")
+            style = SophiaTheme.SUCCESS if status == "read" else SophiaTheme.ERROR
+            detail = f"{event.get('chars', 0)} chars" if status == "read" else event.get("warning", "")
+            self.console.print(
+                Text(
+                    f"    {status}: {event.get('path')} {detail}",
+                    style=style,
+                )
+            )
+
+    def render_swarm_event(self, event: Dict):
+        self.flush_text()
+        etype = event.get("type")
+        if etype == "swarm_analyze":
+            self.console.print(Panel(
+                Text(event.get("reason") or "Analyzing task complexity...", style="dim"),
+                title=Text("swarm analyzing", style=SophiaTheme.BRAND),
+                border_style=SophiaTheme.BRAND,
+                box=box.ROUNDED,
+                padding=(0, 1),
+            ))
+        elif etype == "swarm_plan":
+            table = Table(box=box.SIMPLE, show_header=True, header_style=f"bold {SophiaTheme.BRAND}")
+            table.add_column("Stage", width=14)
+            table.add_column("Mode", width=10)
+            table.add_column("Agents")
+            for stage in event.get("stages", []):
+                agents = ", ".join(
+                    f"{agent.get('agent_id')}:{agent.get('role_id')}"
+                    for agent in stage.get("agents", [])
+                )
+                table.add_row(
+                    stage.get("stage_id", ""),
+                    "parallel" if stage.get("parallel") else "pipeline",
+                    agents,
+                )
+            self.console.print(Panel(
+                table,
+                title=Text(f"swarm plan ({event.get('workflow', 'mixed')})", style=SophiaTheme.BRAND),
+                border_style=SophiaTheme.BRAND,
+                box=box.ROUNDED,
+            ))
+        elif etype == "swarm_stage_start":
+            self.console.print(Text(f"Swarm stage started: {event.get('stage_id')}", style=SophiaTheme.BRAND))
+        elif etype == "swarm_agent_start":
+            self.console.print(Text(
+                f"  agent running: {event.get('agent_id')} ({event.get('role_id')})",
+                style="dim",
+            ))
+        elif etype in {"swarm_agent_complete", "swarm_agent_error"}:
+            ok = etype == "swarm_agent_complete" and event.get("status") == "completed"
+            style = SophiaTheme.SUCCESS if ok else SophiaTheme.ERROR
+            tail = "complete" if ok else event.get("error", "failed")
+            self.console.print(Text(
+                f"  agent {tail}: {event.get('agent_id')} ({event.get('role_id')})",
+                style=style,
+            ))
+        elif etype == "swarm_synthesize":
+            self.console.print(Text(
+                f"Synthesizing {event.get('agent_count', 0)} agent outputs...",
+                style=SophiaTheme.BRAND,
+            ))
+        elif etype == "swarm_done":
+            self.console.print(Text("Swarm complete", style=SophiaTheme.SUCCESS))
+
     def render_tool_call(self, name: str, arguments: Dict):
         self.flush_text()
         color = SophiaTheme.tool_color(name)
@@ -664,6 +747,12 @@ def cmd_chat(args):
                         event["name"],
                         event.get("result", ""),
                     )
+
+                elif etype and etype.startswith("workspace_"):
+                    renderer.render_workspace_event(event)
+
+                elif etype and etype.startswith("swarm_"):
+                    renderer.render_swarm_event(event)
 
                 elif etype == "done":
                     renderer.flush_text()

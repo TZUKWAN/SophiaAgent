@@ -8,6 +8,8 @@ const App = {
         ws: null,
         theme: localStorage.getItem('sophia-theme') || 'light',
         currentAssistantEl: null,
+        currentTextEl: null,
+        currentActivityEl: null,
         currentStreamText: '',
     },
 
@@ -99,6 +101,16 @@ const App = {
             case 'tool_result':
                 this.updateToolCard(data.name, data.result, 'success');
                 break;
+            case 'workspace_scan_start':
+                this.createToolCard('workspace', 'running');
+                this.updateToolCard('workspace', `Scanning ${data.total_files || 0} workspace files...`, 'running');
+                break;
+            case 'workspace_file_start':
+                this.updateToolCard('workspace', `[${data.index}/${data.total}] Reading ${data.path}`, 'running');
+                break;
+            case 'workspace_file_done':
+                this.updateToolCard('workspace', `[${data.index}/${data.total}] ${data.status}: ${data.path} (${data.chars || 0} chars)`, data.status === 'read' ? 'running' : 'error');
+                break;
             case 'swarm_analyze':
                 this.createToolCard('swarm', 'running');
                 this.updateToolCard('swarm', data.reason || 'Analyzing task complexity...', 'running');
@@ -109,11 +121,15 @@ const App = {
             case 'swarm_stage_start':
                 this.createToolCard(`swarm:${data.stage_id}`, 'running');
                 break;
+            case 'swarm_agent_start':
+                this.createToolCard(`agent:${data.agent_id}`, 'running');
+                this.updateToolCard(`agent:${data.agent_id}`, `${data.role_id || data.agent_id} is working...`, 'running');
+                break;
             case 'swarm_agent_complete':
-                this.updateToolCard(`swarm:${data.stage_id || data.agent_id}`, `${data.role_id || data.agent_id}: ${data.status}`, data.status === 'completed' ? 'success' : 'error');
+                this.updateToolCard(`agent:${data.agent_id}`, `${data.role_id || data.agent_id}: ${data.status}`, data.status === 'completed' ? 'success' : 'error');
                 break;
             case 'swarm_agent_error':
-                this.updateToolCard(`swarm:${data.stage_id || data.agent_id}`, data.error || 'Agent failed', 'error');
+                this.updateToolCard(`agent:${data.agent_id}`, data.error || 'Agent failed', 'error');
                 break;
             case 'swarm_stage_end':
                 this.updateToolCard(`swarm:${data.stage_id}`, 'Stage complete', 'success');
@@ -235,6 +251,12 @@ const App = {
 
         const contentEl = document.createElement('div');
         contentEl.className = 'message-content';
+        const activityEl = document.createElement('div');
+        activityEl.className = 'activity-stack';
+        const textEl = document.createElement('div');
+        textEl.className = 'assistant-text';
+        contentEl.appendChild(activityEl);
+        contentEl.appendChild(textEl);
 
         body.appendChild(contentEl);
         div.appendChild(avatar);
@@ -242,24 +264,28 @@ const App = {
         container.appendChild(div);
 
         this.state.currentAssistantEl = contentEl;
+        this.state.currentTextEl = textEl;
+        this.state.currentActivityEl = activityEl;
         this.state.currentStreamText = '';
     },
 
     appendToCurrentMessage(chunk) {
         this.state.currentStreamText += chunk;
-        if (this.state.currentAssistantEl) {
-            this.state.currentAssistantEl.innerHTML = this.renderMarkdown(this.state.currentStreamText);
+        if (this.state.currentTextEl) {
+            this.state.currentTextEl.innerHTML = this.renderMarkdown(this.state.currentStreamText);
             this.scrollToBottom();
         }
     },
 
     finalizeMessage(text) {
-        if (this.state.currentAssistantEl) {
+        if (this.state.currentAssistantEl && this.state.currentTextEl) {
             const final = text || this.state.currentStreamText;
-            this.state.currentAssistantEl.innerHTML = this.renderMarkdown(final);
-            this.renderMath(this.state.currentAssistantEl);
-            this.highlightCode(this.state.currentAssistantEl);
+            this.state.currentTextEl.innerHTML = this.renderMarkdown(final);
+            this.renderMath(this.state.currentTextEl);
+            this.highlightCode(this.state.currentTextEl);
             this.state.currentAssistantEl = null;
+            this.state.currentTextEl = null;
+            this.state.currentActivityEl = null;
             this.state.currentStreamText = '';
             this.scrollToBottom();
         }
@@ -267,6 +293,9 @@ const App = {
 
     createToolCard(name, status) {
         if (!this.state.currentAssistantEl) return;
+        const parent = this.state.currentActivityEl || this.state.currentAssistantEl;
+        const existing = parent.querySelector(`.tool-card[data-tool-name="${CSS.escape(name)}"]`);
+        if (existing) return;
 
         const card = document.createElement('div');
         card.className = 'tool-card';
@@ -283,20 +312,27 @@ const App = {
 
         card.appendChild(header);
         card.appendChild(body);
-        this.state.currentAssistantEl.appendChild(card);
+        parent.appendChild(card);
         this.scrollToBottom();
     },
 
     updateToolCard(name, result, status) {
         const cards = document.querySelectorAll('.tool-card');
+        let found = false;
         for (const card of cards) {
             if (card.dataset.toolName === name) {
+                found = true;
                 const dot = card.querySelector('.dot');
                 if (dot) { dot.className = `dot dot-${status}`; }
                 const body = card.querySelector('.tool-card-body');
                 if (body) { body.textContent = result || '(no output)'; }
             }
         }
+        if (!found && this.state.currentAssistantEl) {
+            this.createToolCard(name, status || 'running');
+            this.updateToolCard(name, result, status);
+        }
+        this.scrollToBottom();
     },
 
     renderMarkdown(text) {

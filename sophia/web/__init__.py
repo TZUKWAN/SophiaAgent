@@ -221,6 +221,11 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
                                 "name": event["name"],
                                 "result": event["result"],
                             })
+                        elif event["type"].startswith("workspace_"):
+                            payload = dict(event)
+                            payload["session_id"] = session_id
+                            payload.pop("context", None)
+                            await websocket.send_json(payload)
                         elif event["type"].startswith("swarm_"):
                             payload = dict(event)
                             payload["session_id"] = session_id

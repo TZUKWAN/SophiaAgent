@@ -193,6 +193,14 @@ class SwarmOrchestrator:
         record.status = "running"
         for stage in record.plan.stages:
             yield {"type": "swarm_stage_start", "stage_id": stage.stage_id}
+            for agent in stage.agents:
+                yield {
+                    "type": "swarm_agent_start",
+                    "stage_id": stage.stage_id,
+                    "agent_id": agent.agent_id,
+                    "role_id": agent.role_id,
+                    "parallel": stage.parallel,
+                }
             stage_results = self._execute_stage(stage, bus, history, system_prompt)
             all_results.extend(stage_results)
             for result in stage_results:
