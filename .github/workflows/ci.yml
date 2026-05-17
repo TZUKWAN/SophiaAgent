@@ -23,6 +23,7 @@ jobs:
           sophia/config.py
           sophia/lifecycle.py
           sophia/integrations.py
+          sophia/workspace_context.py
           run_web.py
           tests/test_swarm_agent_integration.py
           tests/test_swarm_analyzer.py
@@ -39,6 +40,7 @@ jobs:
           tests/test_lifecycle.py
           tests/test_integrations.py
           tests/test_mcp_integration.py
+          tests/test_workspace_context.py
           --select E,F,W
           --ignore E501,E731
 

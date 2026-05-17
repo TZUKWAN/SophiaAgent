@@ -70,6 +70,11 @@ from sophia.research.discovery.method_searcher import MethodSearcher
 from sophia.research.discovery.method_builder import MethodBuilder
 from sophia.research.discovery.dependency_manager import DependencyManager
 from sophia.research.discovery.register import register_discovery_tools
+from sophia.workspace_context import (
+    asks_for_paper_document,
+    collect_workspace_context,
+    save_generated_markdown,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -409,6 +414,29 @@ class SophiaAgent:
             allow_swarm=allow_swarm,
         )
 
+    def _inject_workspace_context(self, user_message: str, workspace_context) -> str:
+        block = workspace_context.to_prompt_block()
+        if not block:
+            return user_message
+        requirements = [
+            "【强制执行约束】",
+            "1. 已读取的工作空间材料是本次回答的主要证据来源。",
+            "2. 文中引用只能来自工作空间材料或真实工具返回结果，严禁编造引用。",
+            "3. 如果工作空间材料不足，必须明确标注不足，不得用看似真实的作者年份补齐。",
+        ]
+        if asks_for_paper_document(user_message):
+            requirements.extend([
+                "4. 按用户要求生成完整论文正文，严格控制标题层级；不要自行添加三级标题。",
+                "5. 论文完成后，系统会自动保存 Markdown 文档；正文中仍需给出完整内容。",
+            ])
+        return f"{user_message}\n\n{block}\n\n" + "\n".join(requirements)
+
+    def _append_generated_document_path(self, user_message: str, final_text: str) -> str:
+        path = save_generated_markdown(self.workspace, user_message, final_text)
+        if not path:
+            return final_text
+        return f"{final_text}\n\n---\n已自动生成 Markdown 文档：{path}"
+
     def run(
         self,
         user_message: str,
@@ -420,25 +448,29 @@ class SophiaAgent:
         if system_prompt is None:
             system_prompt = build_system_prompt(self.workspace)
 
+        workspace_context = collect_workspace_context(self.workspace, user_message)
+        effective_user_message = self._inject_workspace_context(user_message, workspace_context)
+
         if allow_swarm and allowed_tools is None:
-            decision = self.swarm_orchestrator.analyze(user_message)
+            decision = self.swarm_orchestrator.analyze(effective_user_message)
             if decision.need_swarm:
-                return self.swarm_orchestrator.execute(
+                final_text = self.swarm_orchestrator.execute(
                     decision,
-                    user_message,
+                    effective_user_message,
                     history=history,
                     system_prompt=system_prompt,
                 )
+                return self._append_generated_document_path(user_message, final_text)
 
         messages: List[Dict[str, Any]] = [
             {"role": "system", "content": system_prompt}
         ]
         if history:
             messages.extend(history)
-        messages.append({"role": "user", "content": user_message})
+        messages.append({"role": "user", "content": effective_user_message})
 
         # Autopilot: augment messages based on intent
-        messages = self.autopilot.before_run(user_message, messages)
+        messages = self.autopilot.before_run(effective_user_message, messages)
 
         # Auto-compress context if approaching token limit
         messages = self.context_compressor.maybe_compress(messages)
@@ -462,7 +494,7 @@ class SophiaAgent:
 
             if not response.tool_calls:
                 self.hooks.emit(HookEvent.AGENT_POST_RUN, {"messages": messages})
-                return response.content or ""
+                return self._append_generated_document_path(user_message, response.content or "")
 
             for tc in response.tool_calls:
                 logger.info("Tool call: %s(%s)", tc.name, tc.arguments)
@@ -476,7 +508,10 @@ class SophiaAgent:
                 })
 
         self.hooks.emit(HookEvent.AGENT_POST_RUN, {"messages": messages})
-        return messages[-1].get("content", "") if messages else ""
+        return self._append_generated_document_path(
+            user_message,
+            messages[-1].get("content", "") if messages else "",
+        )
 
     def chat(
         self,
@@ -513,13 +548,30 @@ class SophiaAgent:
         if history is None:
             history = []
 
+        workspace_context = collect_workspace_context(self.workspace, user_message)
+        effective_user_message = self._inject_workspace_context(user_message, workspace_context)
+        if workspace_context.requested:
+            yield {
+                "type": "tool_call",
+                "name": "workspace_context_read",
+                "arguments": {"workspace": self.workspace, "max_files": 8},
+            }
+            yield {
+                "type": "tool_result",
+                "name": "workspace_context_read",
+                "result": (
+                    f"已读取 {len(workspace_context.evidences)} 个工作空间文件；"
+                    f"跳过 {len(workspace_context.skipped)} 个文件。"
+                ),
+            }
+
         if allow_swarm and allowed_tools is None:
-            decision = self.swarm_orchestrator.analyze(user_message)
+            decision = self.swarm_orchestrator.analyze(effective_user_message)
             if decision.need_swarm:
                 final_parts = []
                 for event in self.swarm_orchestrator.execute_stream(
                     decision,
-                    user_message,
+                    effective_user_message,
                     history=history,
                     system_prompt=system_prompt,
                 ):
@@ -527,6 +579,10 @@ class SophiaAgent:
                         final_parts.append(event.get("content", ""))
                     yield event
                 final_text = "".join(final_parts)
+                final_text = self._append_generated_document_path(user_message, final_text)
+                if final_text != "".join(final_parts):
+                    saved_note = final_text[len("".join(final_parts)):]
+                    yield {"type": "token", "content": saved_note}
                 yield {
                     "type": "done",
                     "response": final_text,
@@ -542,10 +598,10 @@ class SophiaAgent:
             {"role": "system", "content": system_prompt}
         ]
         messages.extend(history)
-        messages.append({"role": "user", "content": user_message})
+        messages.append({"role": "user", "content": effective_user_message})
 
         # Autopilot: augment messages based on intent
-        messages = self.autopilot.before_run(user_message, messages)
+        messages = self.autopilot.before_run(effective_user_message, messages)
 
         # Auto-compress context if approaching token limit
         messages = self.context_compressor.maybe_compress(messages)
@@ -584,7 +640,10 @@ class SophiaAgent:
                     self._session_tokens[k] += response.usage.get(k, 0)
 
             if not response.tool_calls:
-                final_text = response.content or ""
+                final_text = self._append_generated_document_path(user_message, response.content or "")
+                if final_text != (response.content or ""):
+                    saved_note = final_text[len(response.content or ""):]
+                    yield {"type": "token", "content": saved_note}
                 self.hooks.emit(HookEvent.AGENT_POST_STREAM, {"messages": messages})
                 yield {
                     "type": "done",
@@ -608,12 +667,19 @@ class SophiaAgent:
                 })
 
         self.hooks.emit(HookEvent.AGENT_POST_STREAM, {"messages": messages})
+        final_text = self._append_generated_document_path(
+            user_message,
+            messages[-1].get("content", ""),
+        )
+        if final_text != messages[-1].get("content", ""):
+            saved_note = final_text[len(messages[-1].get("content", "")):]
+            yield {"type": "token", "content": saved_note}
         yield {
             "type": "done",
-            "response": messages[-1].get("content", ""),
+            "response": final_text,
             "history": history + [
                 {"role": "user", "content": user_message},
-                {"role": "assistant", "content": messages[-1].get("content", "")},
+                {"role": "assistant", "content": final_text},
             ],
             "usage": dict(self._session_tokens),
         }

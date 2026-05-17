@@ -10,6 +10,11 @@ class FakeProvider:
         self.calls.append((messages, tools))
         return ProviderResponse(content="single-response")
 
+    def chat_stream(self, messages, tools=None):
+        self.calls.append((messages, tools))
+        yield "single-response"
+        return ProviderResponse(content="single-response")
+
 
 def test_agent_initializes_swarm_and_tools(config):
     agent = SophiaAgent(config)
@@ -42,3 +47,35 @@ def test_stream_complex_agent_emits_swarm_events(config):
     types = [event["type"] for event in events]
     assert "swarm_analyze" in types
     assert types[-1] == "done"
+
+
+def test_workspace_request_injects_local_evidence(config, tmp_path):
+    config.session.workspace = str(tmp_path)
+    (tmp_path / "paper.md").write_text("真实论文材料：中华文化国际传播。", encoding="utf-8")
+    agent = SophiaAgent(config)
+    fake = FakeProvider()
+    agent.provider = fake
+
+    agent.run("基于工作空间中的论文，仔细阅读后写论文", allow_swarm=False)
+
+    user_content = "\n".join(
+        message.get("content") or ""
+        for messages, _ in fake.calls
+        for message in messages
+    )
+    assert "真实论文材料：中华文化国际传播。" in user_content
+    assert "严禁编造引用" in user_content
+
+
+def test_stream_workspace_request_emits_context_tool_card(config, tmp_path):
+    config.session.workspace = str(tmp_path)
+    (tmp_path / "paper.md").write_text("真实论文材料。", encoding="utf-8")
+    agent = SophiaAgent(config)
+    agent.provider = FakeProvider()
+
+    events = list(agent.run_stream("基于工作空间中的论文写论文", allow_swarm=False))
+
+    assert events[0]["type"] == "tool_call"
+    assert events[0]["name"] == "workspace_context_read"
+    assert events[-1]["type"] == "done"
+    assert "已自动生成 Markdown 文档" in events[-1]["response"]

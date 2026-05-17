@@ -239,6 +239,14 @@ sophia --workspace . chat
 SOPHIA_WORKSPACE=/path/to/project sophia tools list
 ```
 
+When a request explicitly says it is based on workspace papers, documents, or
+references, SophiaAgent now performs an automatic local pre-read before calling
+the model. It scans supported local files (`.pdf`, `.docx`, `.md`, `.txt`,
+`.tex`, `.csv`), injects the extracted evidence into the prompt, and warns the
+model not to invent citations. If the request asks for a paper or article,
+SophiaAgent also saves the final answer as Markdown under
+`.sophia/generated_documents/`.
+
 ### Slash Commands in Chat
 
 Inside `sophia chat`:
