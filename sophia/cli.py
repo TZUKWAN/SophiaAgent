@@ -107,7 +107,10 @@ class SophiaRenderer:
         self.console = console or Console()
         self._text_parts: List[str] = []
         self._live: Optional[Live] = None
+        self._activity_live: Optional[Live] = None
         self._last_update: float = 0
+        self._workspace_read = 0
+        self._workspace_total = 0
 
     def render_banner(self, agent: SophiaAgent, session_id: Optional[str]):
         body = Text()
@@ -163,33 +166,43 @@ class SophiaRenderer:
             self._live = None
         self._text_parts = []
 
+    def flush_activity(self):
+        if self._activity_live:
+            self._activity_live.__exit__(None, None, None)
+            self._activity_live = None
+
     def render_workspace_event(self, event: Dict):
         self.flush_text()
         etype = event.get("type")
         if etype == "workspace_scan_start":
-            self.console.print(
-                Text(
-                    f"Workspace scan: {event.get('total_files', 0)} supported files found",
-                    style=SophiaTheme.BRAND,
-                )
+            self._workspace_read = 0
+            self._workspace_total = int(event.get("total_files") or 0)
+            status = Text(
+                f"Workspace: scanning {self._workspace_total} files...",
+                style=SophiaTheme.BRAND,
             )
+            self._activity_live = Live(status, console=self.console, refresh_per_second=8, transient=True)
+            self._activity_live.__enter__()
         elif etype == "workspace_file_start":
-            self.console.print(
-                Text(
-                    f"  [{event.get('index')}/{event.get('total')}] reading {event.get('path')}",
+            if self._activity_live:
+                self._activity_live.update(Text(
+                    f"Workspace: reading {event.get('index')}/{event.get('total')}  {event.get('path')}",
                     style="dim",
-                )
-            )
+                ))
         elif etype == "workspace_file_done":
-            status = event.get("status")
-            style = SophiaTheme.SUCCESS if status == "read" else SophiaTheme.ERROR
-            detail = f"{event.get('chars', 0)} chars" if status == "read" else event.get("warning", "")
-            self.console.print(
-                Text(
-                    f"    {status}: {event.get('path')} {detail}",
-                    style=style,
-                )
-            )
+            if event.get("status") == "read":
+                self._workspace_read += 1
+            if self._activity_live:
+                self._activity_live.update(Text(
+                    f"Workspace: read {self._workspace_read}/{event.get('total')} files",
+                    style="dim",
+                ))
+        elif etype == "workspace_scan_done":
+            self.flush_activity()
+            self.console.print(Text(
+                f"Workspace: read {event.get('read_files', 0)}/{event.get('total_files', 0)} files",
+                style=SophiaTheme.SUCCESS,
+            ))
 
     def render_swarm_event(self, event: Dict):
         self.flush_text()
@@ -248,6 +261,7 @@ class SophiaRenderer:
 
     def render_tool_call(self, name: str, arguments: Dict):
         self.flush_text()
+        self.flush_activity()
         color = SophiaTheme.tool_color(name)
 
         title = Text()
@@ -287,6 +301,7 @@ class SophiaRenderer:
 
     def render_error(self, exc: Exception):
         self.flush_text()
+        self.flush_activity()
         self.console.print(Panel(
             f"{type(exc).__name__}: {exc}",
             title="[error]",

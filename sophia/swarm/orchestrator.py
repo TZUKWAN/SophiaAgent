@@ -27,10 +27,11 @@ class FilteredToolRegistry:
 
     def __init__(self, parent_registry, allowed_tools: Optional[List[str]]):
         self._parent = parent_registry
+        self._filter_enabled = allowed_tools is not None
         self._allowed = set(allowed_tools or [])
 
     def dispatch(self, name: str, args: Dict[str, Any]) -> str:
-        if self._allowed and name not in self._allowed:
+        if self._filter_enabled and name not in self._allowed:
             return json.dumps(
                 {
                     "error": f"Tool '{name}' is not allowed for this sub-agent.",
@@ -42,8 +43,10 @@ class FilteredToolRegistry:
 
     def get_schemas(self):
         schemas = self._parent.get_schemas()
-        if not self._allowed:
+        if not self._filter_enabled:
             return schemas
+        if not self._allowed:
+            return []
         return [
             schema
             for schema in schemas
@@ -51,7 +54,7 @@ class FilteredToolRegistry:
         ]
 
     def list_tools(self) -> List[str]:
-        if not self._allowed:
+        if not self._filter_enabled:
             return self._parent.list_tools()
         return sorted(self._allowed)
 
@@ -201,9 +204,8 @@ class SwarmOrchestrator:
                     "role_id": agent.role_id,
                     "parallel": stage.parallel,
                 }
-            stage_results = self._execute_stage(stage, bus, history, system_prompt)
-            all_results.extend(stage_results)
-            for result in stage_results:
+            for result in self._iter_stage_results(stage, bus, history, system_prompt):
+                all_results.append(result)
                 yield {
                     "type": "swarm_agent_complete"
                     if result.status == "completed"
@@ -297,6 +299,42 @@ class SwarmOrchestrator:
                         )
                     )
         return results
+
+    def _iter_stage_results(
+        self,
+        stage: Stage,
+        bus: SwarmBus,
+        history: Optional[List[Dict[str, Any]]],
+        system_prompt: Optional[str],
+    ):
+        if not stage.parallel or len(stage.agents) <= 1:
+            for agent in stage.agents:
+                yield self._run_agent(agent, bus, history, system_prompt)
+            return
+
+        with ThreadPoolExecutor(max_workers=min(len(stage.agents), self.max_workers)) as executor:
+            future_map = {
+                executor.submit(self._run_agent, agent, bus, history, system_prompt): agent
+                for agent in stage.agents
+            }
+            for future in as_completed(future_map):
+                agent = future_map[future]
+                try:
+                    yield future.result(timeout=agent.timeout)
+                except TimeoutError:
+                    yield AgentResult(
+                        agent_id=agent.agent_id,
+                        role_id=agent.role_id,
+                        status="timeout",
+                        error=f"Timed out after {agent.timeout}s",
+                    )
+                except Exception as exc:
+                    yield AgentResult(
+                        agent_id=agent.agent_id,
+                        role_id=agent.role_id,
+                        status="failed",
+                        error=str(exc),
+                    )
 
     def _run_agent(
         self,

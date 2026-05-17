@@ -1,5 +1,6 @@
 from sophia.agent import SophiaAgent
 from sophia.providers.base import ProviderResponse
+from sophia.swarm.models import SwarmDecision
 
 
 class FakeProvider:
@@ -59,6 +60,16 @@ def test_stream_complex_agent_emits_swarm_events(config):
     assert types[-1] == "done"
 
 
+def test_stream_simple_agent_does_not_emit_workspace_scan(config):
+    agent = SophiaAgent(config)
+    agent.provider = FakeProvider()
+
+    events = list(agent.run_stream("hello", allow_swarm=False))
+
+    assert "workspace_scan_done" not in [event["type"] for event in events]
+    assert events[-1]["type"] == "done"
+
+
 def test_workspace_request_injects_local_evidence(config, tmp_path):
     config.session.workspace = str(tmp_path)
     (tmp_path / "paper.md").write_text(
@@ -89,7 +100,7 @@ def test_stream_workspace_request_emits_context_tool_card(config, tmp_path):
 
     assert events[0]["type"] == "workspace_scan_start"
     assert any(event["type"] == "workspace_file_done" for event in events)
-    assert any(event.get("name") == "workspace_context_read" for event in events)
+    assert any(event["type"] == "workspace_scan_done" for event in events)
     assert events[-1]["type"] == "done"
     assert "single-response" in events[-1]["response"]
     assert ".sophia" in events[-1]["response"]
@@ -117,3 +128,41 @@ def test_paper_request_with_references_prioritizes_user_sources(config):
     )
 
     assert "The user has supplied references" in _captured_user_content(fake)
+
+
+def test_swarm_stream_failure_falls_back_to_main_agent(config):
+    agent = SophiaAgent(config)
+    agent.provider = FakeProvider()
+
+    def fail_stream(*args, **kwargs):
+        raise RuntimeError("swarm broke")
+        yield  # pragma: no cover
+
+    agent.swarm_orchestrator.analyze = lambda message: SwarmDecision(True, recommended_roles=["writer"])
+    agent.swarm_orchestrator.execute_stream = fail_stream
+    events = list(
+        agent.run_stream(
+            "甯垜鍐欎竴绡囧叧浜庢暟瀛楃粡娴庣殑鏂囩尞缁艰堪锛岃鍏ㄩ潰鍒嗘瀽鏂规硶銆佸紩鐢ㄥ拰璐ㄩ噺闂"
+        )
+    )
+
+    assert any(event["type"] == "swarm_error" for event in events)
+    assert events[-1]["type"] == "done"
+    assert "single-response" in events[-1]["response"]
+
+
+def test_swarm_run_failure_falls_back_to_main_agent(config):
+    agent = SophiaAgent(config)
+    fake = FakeProvider()
+    agent.provider = fake
+
+    def fail_execute(*args, **kwargs):
+        raise RuntimeError("swarm broke")
+
+    agent.swarm_orchestrator.analyze = lambda message: SwarmDecision(True, recommended_roles=["writer"])
+    agent.swarm_orchestrator.execute = fail_execute
+    text = agent.run(
+        "甯垜鍐欎竴绡囧叧浜庢暟瀛楃粡娴庣殑鏂囩尞缁艰堪锛岃鍏ㄩ潰鍒嗘瀽鏂规硶銆佸紩鐢ㄥ拰璐ㄩ噺闂"
+    )
+
+    assert text == "single-response"

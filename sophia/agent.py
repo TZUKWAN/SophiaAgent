@@ -484,13 +484,16 @@ class SophiaAgent:
         if allow_swarm and allowed_tools is None:
             decision = self.swarm_orchestrator.analyze(effective_user_message)
             if decision.need_swarm:
-                final_text = self.swarm_orchestrator.execute(
-                    decision,
-                    effective_user_message,
-                    history=history,
-                    system_prompt=system_prompt,
-                )
-                return self._append_generated_document_path(user_message, final_text)
+                try:
+                    final_text = self.swarm_orchestrator.execute(
+                        decision,
+                        effective_user_message,
+                        history=history,
+                        system_prompt=system_prompt,
+                    )
+                    return self._append_generated_document_path(user_message, final_text)
+                except Exception as exc:
+                    logger.exception("Swarm execution failed; falling back to single-agent run: %s", exc)
 
         messages: List[Dict[str, Any]] = [
             {"role": "system", "content": system_prompt}
@@ -582,57 +585,54 @@ class SophiaAgent:
         for event in iter_workspace_context_events(self.workspace, user_message):
             if event["type"] == "workspace_context_complete":
                 workspace_context = event["context"]
+                if workspace_context.requested:
+                    yield {
+                        "type": "workspace_scan_done",
+                        "read_files": event.get("read_files", len(workspace_context.evidences)),
+                        "skipped_files": event.get("skipped_files", len(workspace_context.skipped)),
+                        "total_files": event.get("total_files", workspace_context.total_candidates),
+                    }
                 break
             yield event
         if workspace_context is None:
             workspace_context = collect_workspace_context(self.workspace, user_message)
         effective_user_message = self._inject_workspace_context(user_message, workspace_context)
-        if workspace_context.requested:
-            yield {
-                "type": "tool_call",
-                "name": "workspace_context_read",
-                "arguments": {
-                    "workspace": self.workspace,
-                    "total_files": workspace_context.total_candidates,
-                },
-            }
-            yield {
-                "type": "tool_result",
-                "name": "workspace_context_read",
-                "result": (
-                    f"已读取 {len(workspace_context.evidences)} 个工作空间文件；"
-                    f"跳过 {len(workspace_context.skipped)} 个文件。"
-                ),
-            }
-
         if allow_swarm and allowed_tools is None:
             decision = self.swarm_orchestrator.analyze(effective_user_message)
             if decision.need_swarm:
                 final_parts = []
-                for event in self.swarm_orchestrator.execute_stream(
-                    decision,
-                    effective_user_message,
-                    history=history,
-                    system_prompt=system_prompt,
-                ):
-                    if event.get("type") == "token":
-                        final_parts.append(event.get("content", ""))
-                    yield event
-                final_text = "".join(final_parts)
-                final_text = self._append_generated_document_path(user_message, final_text)
-                if final_text != "".join(final_parts):
-                    saved_note = final_text[len("".join(final_parts)):]
-                    yield {"type": "token", "content": saved_note}
-                yield {
-                    "type": "done",
-                    "response": final_text,
-                    "history": history + [
-                        {"role": "user", "content": user_message},
-                        {"role": "assistant", "content": final_text},
-                    ],
-                    "usage": dict(self._session_tokens),
-                }
-                return
+                try:
+                    for event in self.swarm_orchestrator.execute_stream(
+                        decision,
+                        effective_user_message,
+                        history=history,
+                        system_prompt=system_prompt,
+                    ):
+                        if event.get("type") == "token":
+                            final_parts.append(event.get("content", ""))
+                        yield event
+                    final_text = "".join(final_parts)
+                    final_text = self._append_generated_document_path(user_message, final_text)
+                    if final_text != "".join(final_parts):
+                        saved_note = final_text[len("".join(final_parts)):]
+                        yield {"type": "token", "content": saved_note}
+                    yield {
+                        "type": "done",
+                        "response": final_text,
+                        "history": history + [
+                            {"role": "user", "content": user_message},
+                            {"role": "assistant", "content": final_text},
+                        ],
+                        "usage": dict(self._session_tokens),
+                    }
+                    return
+                except Exception as exc:
+                    logger.exception("Swarm stream failed; falling back to single-agent stream: %s", exc)
+                    yield {
+                        "type": "swarm_error",
+                        "error": "Swarm failed and Sophia is continuing with the main agent.",
+                        "detail": str(exc),
+                    }
 
         messages: List[Dict[str, Any]] = [
             {"role": "system", "content": system_prompt}

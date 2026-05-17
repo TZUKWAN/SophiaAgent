@@ -111,6 +111,9 @@ const App = {
             case 'workspace_file_done':
                 this.updateToolCard('workspace', `[${data.index}/${data.total}] ${data.status}: ${data.path} (${data.chars || 0} chars)`, data.status === 'read' ? 'running' : 'error');
                 break;
+            case 'workspace_scan_done':
+                this.updateToolCard('workspace', `Read ${data.read_files || 0}/${data.total_files || 0} workspace files. Skipped ${data.skipped_files || 0}.`, 'success');
+                break;
             case 'swarm_analyze':
                 this.createToolCard('swarm', 'running');
                 this.updateToolCard('swarm', data.reason || 'Analyzing task complexity...', 'running');
