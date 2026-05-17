@@ -25,7 +25,10 @@ from sophia.paper_quality import (
     append_quality_report_if_needed,
     build_paper_generation_contract,
     build_reference_priority_notice,
+    inspect_generated_paper,
+    is_paper_generation_request,
 )
+from sophia.paper_requirements import check_paper_requirements
 from sophia.plugins import PluginManager
 from sophia.prompts.system import build_system_prompt
 from sophia.providers import create_provider
@@ -498,6 +501,58 @@ class SophiaAgent:
             return final_text
         return f"{final_text}\n\n---\n已自动生成 Markdown 文档：{path}"
 
+    def _maybe_repair_paper_output(
+        self,
+        user_message: str,
+        final_text: str,
+        messages: List[Dict[str, Any]],
+        registry,
+        tool_schemas,
+    ) -> str:
+        if not is_paper_generation_request(user_message) or not final_text.strip():
+            return final_text
+        report = inspect_generated_paper(final_text)
+        if report.passed:
+            return final_text
+
+        repair_prompt = (
+            "[Sophia internal quality repair]\n"
+            "The previous paper draft failed mandatory quality gates. Continue repairing it now. "
+            "Do not ask the user to fix routine quality problems. Expand the body, add verified "
+            "references, add meaningful tables and figures, and preserve the user's requested "
+            "structure and export format. Never fabricate citations, data, or empirical results.\n\n"
+            f"Failed checks: {report.issues}\n\n"
+            "Previous draft:\n"
+            f"{final_text}"
+        )
+        repair_messages = list(messages)
+        repair_messages.append({"role": "user", "content": repair_prompt})
+        try:
+            repaired = self.provider.chat(repair_messages, tools=tool_schemas)
+        except Exception as exc:
+            logger.warning("Paper repair pass failed: %s", exc)
+            return final_text
+
+        if repaired.tool_calls:
+            repair_messages.append(repaired.to_dict())
+            for tc in repaired.tool_calls:
+                try:
+                    result = registry.dispatch(tc.name, tc.arguments)
+                except Exception as exc:
+                    result = f"Tool failed during repair: {exc}"
+                repair_messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": result,
+                })
+            try:
+                repaired = self.provider.chat(repair_messages, tools=tool_schemas)
+            except Exception as exc:
+                logger.warning("Paper repair synthesis failed: %s", exc)
+                return final_text
+
+        return repaired.content or final_text
+
     def run(
         self,
         user_message: str,
@@ -508,6 +563,10 @@ class SophiaAgent:
     ) -> str:
         if system_prompt is None:
             system_prompt = build_system_prompt(self.workspace)
+
+        requirement_check = check_paper_requirements(user_message)
+        if requirement_check.requires_clarification:
+            return requirement_check.message
 
         workspace_context = collect_workspace_context(self.workspace, user_message)
         effective_user_message = self._inject_workspace_context(user_message, workspace_context)
@@ -558,7 +617,14 @@ class SophiaAgent:
 
             if not response.tool_calls:
                 self.hooks.emit(HookEvent.AGENT_POST_RUN, {"messages": messages})
-                return self._append_generated_document_path(user_message, response.content or "")
+                final_text = self._maybe_repair_paper_output(
+                    user_message,
+                    response.content or "",
+                    messages,
+                    registry,
+                    tool_schemas,
+                )
+                return self._append_generated_document_path(user_message, final_text)
 
             for tc in response.tool_calls:
                 logger.info("Tool call: %s(%s)", tc.name, tc.arguments)
@@ -572,10 +638,14 @@ class SophiaAgent:
                 })
 
         self.hooks.emit(HookEvent.AGENT_POST_RUN, {"messages": messages})
-        return self._append_generated_document_path(
+        final_text = self._maybe_repair_paper_output(
             user_message,
             messages[-1].get("content", "") if messages else "",
+            messages,
+            registry,
+            tool_schemas,
         )
+        return self._append_generated_document_path(user_message, final_text)
 
     def chat(
         self,
@@ -611,6 +681,20 @@ class SophiaAgent:
 
         if history is None:
             history = []
+
+        requirement_check = check_paper_requirements(user_message)
+        if requirement_check.requires_clarification:
+            yield {"type": "token", "content": requirement_check.message}
+            yield {
+                "type": "done",
+                "response": requirement_check.message,
+                "history": history + [
+                    {"role": "user", "content": user_message},
+                    {"role": "assistant", "content": requirement_check.message},
+                ],
+                "usage": dict(self._session_tokens),
+            }
+            return
 
         workspace_context = None
         for event in iter_workspace_context_events(self.workspace, user_message):
@@ -711,7 +795,14 @@ class SophiaAgent:
                     self._session_tokens[k] += response.usage.get(k, 0)
 
             if not response.tool_calls:
-                final_text = self._append_generated_document_path(user_message, response.content or "")
+                final_text = self._maybe_repair_paper_output(
+                    user_message,
+                    response.content or "",
+                    messages,
+                    registry,
+                    tool_schemas,
+                )
+                final_text = self._append_generated_document_path(user_message, final_text)
                 if final_text != (response.content or ""):
                     saved_note = final_text[len(response.content or ""):]
                     yield {"type": "token", "content": saved_note}
@@ -738,10 +829,14 @@ class SophiaAgent:
                 })
 
         self.hooks.emit(HookEvent.AGENT_POST_STREAM, {"messages": messages})
-        final_text = self._append_generated_document_path(
+        final_text = self._maybe_repair_paper_output(
             user_message,
             messages[-1].get("content", ""),
+            messages,
+            registry,
+            tool_schemas,
         )
+        final_text = self._append_generated_document_path(user_message, final_text)
         if final_text != messages[-1].get("content", ""):
             saved_note = final_text[len(messages[-1].get("content", "")):]
             yield {"type": "token", "content": saved_note}

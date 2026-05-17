@@ -6,9 +6,12 @@ from sophia.swarm.models import SwarmDecision
 class FakeProvider:
     def __init__(self):
         self.calls = []
+        self.responses = []
 
     def chat(self, messages, tools=None):
         self.calls.append((messages, tools))
+        if self.responses:
+            return ProviderResponse(content=self.responses.pop(0))
         return ProviderResponse(content="single-response")
 
     def chat_stream(self, messages, tools=None):
@@ -44,7 +47,7 @@ def test_complex_agent_run_starts_swarm_without_user_trigger(config):
     agent = SophiaAgent(config)
     fake = FakeProvider()
     agent.provider = fake
-    text = agent.run("帮我写一篇关于数字经济的文献综述，要全面分析方法、引用和质量问题")
+    text = agent.run("帮我写一篇关于数字经济的文献综述，正文不少于8000字，要全面分析方法、引用和质量问题")
     assert "single-response" in text
     assert len(agent.swarm_orchestrator.list_executions()) == 1
 
@@ -53,7 +56,7 @@ def test_stream_complex_agent_emits_swarm_events(config):
     agent = SophiaAgent(config)
     agent.provider = FakeProvider()
     events = list(
-        agent.run_stream("帮我写一篇关于数字经济的文献综述，要全面分析方法、引用和质量问题")
+        agent.run_stream("帮我写一篇关于数字经济的文献综述，正文不少于8000字，要全面分析方法、引用和质量问题")
     )
     types = [event["type"] for event in events]
     assert "swarm_analyze" in types
@@ -80,7 +83,7 @@ def test_workspace_request_injects_local_evidence(config, tmp_path):
     fake = FakeProvider()
     agent.provider = fake
 
-    agent.run("基于工作空间中的论文，仔细阅读后写论文", allow_swarm=False)
+    agent.run("基于工作空间中的论文，仔细阅读后写理论论文，正文不少于8000字", allow_swarm=False)
 
     user_content = _captured_user_content(fake)
     assert "Authentic workspace literature about Chinese culture communication." in user_content
@@ -96,7 +99,7 @@ def test_stream_workspace_request_emits_context_tool_card(config, tmp_path):
     agent = SophiaAgent(config)
     agent.provider = FakeProvider()
 
-    events = list(agent.run_stream("基于工作空间中的论文写论文", allow_swarm=False))
+    events = list(agent.run_stream("基于工作空间中的论文写理论论文，正文不少于8000字", allow_swarm=False))
 
     assert events[0]["type"] == "workspace_scan_start"
     assert any(event["type"] == "workspace_file_done" for event in events)
@@ -112,9 +115,36 @@ def test_paper_request_without_references_prompts_before_search(config):
     fake = FakeProvider()
     agent.provider = fake
 
-    agent.run("write a paper about generative AI and cultural communication", allow_swarm=False)
+    agent.run(
+        "write a theoretical paper about generative AI and cultural communication, "
+        "at least 8000 words",
+        allow_swarm=False,
+    )
 
     assert "Before independently searching for references" in _captured_user_content(fake)
+
+
+def test_underspecified_paper_request_asks_for_requirements(config):
+    agent = SophiaAgent(config)
+    fake = FakeProvider()
+    agent.provider = fake
+
+    response = agent.run("请写一篇生成式人工智能论文", allow_swarm=False)
+
+    assert "确认" in response
+    assert "论文类型" in response
+    assert "目标正文字数" in response
+    assert fake.calls == []
+
+
+def test_stream_underspecified_paper_request_asks_for_requirements(config):
+    agent = SophiaAgent(config)
+    agent.provider = FakeProvider()
+
+    events = list(agent.run_stream("请写一篇生成式人工智能论文", allow_swarm=False))
+
+    assert events[-1]["type"] == "done"
+    assert "论文类型" in events[-1]["response"]
 
 
 def test_paper_request_with_references_prioritizes_user_sources(config):
@@ -123,11 +153,31 @@ def test_paper_request_with_references_prioritizes_user_sources(config):
     agent.provider = fake
 
     agent.run(
-        "write a paper. References: Smith (2024). Generative AI and culture.",
+        "write a theoretical paper, at least 8000 words. "
+        "References: Smith (2024). Generative AI and culture.",
         allow_swarm=False,
     )
 
     assert "The user has supplied references" in _captured_user_content(fake)
+
+
+def test_short_paper_triggers_internal_repair_pass(config):
+    agent = SophiaAgent(config)
+    fake = FakeProvider()
+    fake.responses = [
+        "# Paper\n\nshort draft\n\n## References\n1. Smith, J. (2024). Real paper. Journal.",
+        "# Paper\n\nrepaired draft still short",
+    ]
+    agent.provider = fake
+
+    response = agent.run(
+        "write a theoretical paper about generative AI, at least 8000 words",
+        allow_swarm=False,
+    )
+
+    assert "repaired draft still short" in response
+    assert len(fake.calls) == 2
+    assert "Sophia internal quality repair" in _captured_user_content(fake)
 
 
 def test_empirical_request_injects_task_harness_and_preflight(config):
