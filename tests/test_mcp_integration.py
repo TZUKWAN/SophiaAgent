@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from sophia import cli
 
@@ -55,3 +56,8 @@ def test_mcp_prompt_sophia_mentions_sophia_ask():
     assert "sophia_ask" in messages[0]["content"]
     assert "分析论文" in messages[0]["content"]
 
+
+def test_default_workspace_override_uses_current_directory(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    assert Path(cli._default_workspace_override()) == tmp_path

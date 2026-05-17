@@ -31,7 +31,7 @@ def sophia_mcp_server_config(python_executable: Optional[str] = None) -> Dict[st
     return {
         "type": "stdio",
         "command": python_executable or sys.executable,
-        "args": ["-m", "sophia", "serve", "--stdio"],
+        "args": ["-m", "sophia", "--workspace", ".", "serve", "--stdio"],
     }
 
 
@@ -84,23 +84,24 @@ def install_claude_code(
 
     if claude_path:
         config = sophia_mcp_server_config(python_executable)
-        command = [
-            claude_path,
-            "mcp",
-            "add-json",
-            "sophia",
-            json.dumps(config, ensure_ascii=False),
-            "--scope",
-            "user",
-        ]
         try:
+            command = _claude_mcp_add_command(claude_path, config)
             completed = runner(command, capture_output=True, text=True, check=False)
+            output = (completed.stderr or completed.stdout or "").strip()
+            if completed.returncode != 0 and "already exists" in output.lower():
+                remove_command = [claude_path, "mcp", "remove", "sophia", "--scope", "user"]
+                removed = runner(remove_command, capture_output=True, text=True, check=False)
+                if removed.returncode == 0:
+                    completed = runner(command, capture_output=True, text=True, check=False)
+                    output = (completed.stderr or completed.stdout or "").strip()
+                    if completed.returncode == 0:
+                        result.messages.append("Updated existing SophiaAgent MCP server in Claude Code.")
             if completed.returncode == 0:
-                result.messages.append("Registered SophiaAgent MCP server with Claude Code.")
+                if not any("MCP server" in message for message in result.messages):
+                    result.messages.append("Registered SophiaAgent MCP server with Claude Code.")
             else:
                 result.errors.append(
-                    "Claude Code MCP registration command failed: "
-                    f"{(completed.stderr or completed.stdout or '').strip()}"
+                    f"Claude Code MCP registration command failed: {output}"
                 )
         except OSError as exc:
             result.errors.append(f"Claude Code MCP registration failed: {exc}")
@@ -109,6 +110,18 @@ def install_claude_code(
 
     result.installed = not result.errors
     return result
+
+
+def _claude_mcp_add_command(claude_path: str, config: Dict[str, Any]) -> List[str]:
+    return [
+        claude_path,
+        "mcp",
+        "add-json",
+        "sophia",
+        json.dumps(config, ensure_ascii=False),
+        "--scope",
+        "user",
+    ]
 
 
 def install_codex(

@@ -7,6 +7,7 @@ Usage:
 
 import argparse
 import logging
+import os
 import uvicorn
 
 from sophia.config import Config
@@ -20,6 +21,11 @@ def main():
     parser.add_argument("--port", type=int, default=8080, help="Port to listen on")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind")
     parser.add_argument("--config", default=None, help="Path to config.yaml")
+    parser.add_argument(
+        "--workspace",
+        default=os.getcwd(),
+        help="Override workspace directory. Use '.' to bind Sophia to the current project.",
+    )
     parser.add_argument("--verbose", "-v", action="store_true", help="Debug logging")
     args = parser.parse_args()
 
@@ -30,10 +36,10 @@ def main():
         datefmt="%H:%M:%S",
     )
 
-    config = Config.load(args.config)
+    config = Config.load(args.config, workspace=args.workspace)
     app = create_app(config)
 
-    print(f"\nSophiaAgent Web Server")
+    print("\nSophiaAgent Web Server")
     print(f"  Model: {config.model.name}")
     print(f"  Workspace: {config.session.workspace}")
     print(f"  URL: http://{args.host}:{args.port}")

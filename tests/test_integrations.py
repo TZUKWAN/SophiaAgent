@@ -10,7 +10,7 @@ def test_sophia_mcp_server_config_uses_stdio():
     assert config == {
         "type": "stdio",
         "command": "python",
-        "args": ["-m", "sophia", "serve", "--stdio"],
+        "args": ["-m", "sophia", "--workspace", ".", "serve", "--stdio"],
     }
 
 
@@ -70,6 +70,28 @@ def test_claude_install_uses_cli_registration_when_detected(tmp_path, monkeypatc
     assert "sophia_ask" in command_file.read_text(encoding="utf-8")
 
 
+def test_claude_install_updates_existing_mcp_server(tmp_path, monkeypatch):
+    commands = []
+
+    def fake_runner(command, **kwargs):
+        commands.append(command)
+        if command[:4] == ["claude", "mcp", "add-json", "sophia"] and len(commands) == 1:
+            return subprocess.CompletedProcess(command, 1, stdout="", stderr="MCP server sophia already exists in user config")
+        return subprocess.CompletedProcess(command, 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(integrations, "detect_client", lambda name: "claude")
+
+    result = integrations.install_claude_code(
+        home=tmp_path,
+        python_executable="python",
+        runner=fake_runner,
+    )
+
+    assert result.installed is True
+    assert commands[1] == ["claude", "mcp", "remove", "sophia", "--scope", "user"]
+    assert commands[2][:4] == ["claude", "mcp", "add-json", "sophia"]
+
+
 def test_repo_integration_files_are_created(tmp_path):
     paths = integrations.repo_integration_files(tmp_path, python_executable="python")
 
@@ -77,4 +99,3 @@ def test_repo_integration_files_are_created(tmp_path):
     assert (tmp_path / ".claude" / "commands" / "sophia.md").exists()
     assert (tmp_path / "plugins" / "sophia" / ".codex-plugin" / "plugin.json").exists()
     assert (tmp_path / ".agents" / "plugins" / "marketplace.json").exists()
-

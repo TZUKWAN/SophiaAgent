@@ -20,8 +20,10 @@ jobs:
         run: >
           ruff check
           sophia/swarm
+          sophia/config.py
           sophia/lifecycle.py
           sophia/integrations.py
+          run_web.py
           tests/test_swarm_agent_integration.py
           tests/test_swarm_analyzer.py
           tests/test_swarm_bus.py

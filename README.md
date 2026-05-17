@@ -178,11 +178,14 @@ sophia web       Start the web UI
 Useful examples:
 
 ```bash
+sophia chat
 sophia chat --model gpt-4o
+sophia --workspace . chat
 sophia chat --session SESSION_ID
 sophia exec --json "分析这个研究问题适合什么方法"
 sophia tools list --json
 sophia integrate --auto
+sophia --workspace . web --host 127.0.0.1 --port 8080
 sophia web --host 127.0.0.1 --port 8080
 ```
 
@@ -224,6 +227,17 @@ Project-level integration files are also included in this repository:
 The MCP server exposes all Sophia tools plus a unified `sophia_ask` tool. External
 agents should call `sophia_ask` with the full user request; SophiaAgent then
 decides internally whether to run normally or launch its automatic swarm.
+
+By default, the generated MCP server command includes `--workspace .`, so Codex
+and Claude Code bind SophiaAgent to the project directory where the coding agent
+starts the MCP server. The CLI also uses the shell's current directory as the
+default workspace, so `cd /path/to/project && sophia chat` binds SophiaAgent to
+that project. For explicit overrides, pass `--workspace` or set `SOPHIA_WORKSPACE`:
+
+```bash
+sophia --workspace . chat
+SOPHIA_WORKSPACE=/path/to/project sophia tools list
+```
 
 ### Slash Commands in Chat
 

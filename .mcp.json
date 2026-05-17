@@ -6,6 +6,8 @@
       "args": [
         "-m",
         "sophia",
+        "--workspace",
+        ".",
         "serve",
         "--stdio"
       ]

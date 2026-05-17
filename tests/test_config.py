@@ -1,5 +1,6 @@
 """Tests for Config module."""
 import os
+from pathlib import Path
 
 from sophia.config import Config
 
@@ -35,3 +36,32 @@ def test_path_expansion():
     c = Config()
     assert "~" not in c.session.workspace
     assert "~" not in c.session.db_path
+
+
+def test_workspace_argument_overrides_config(tmp_path):
+    configured = tmp_path / "configured"
+    requested = tmp_path / "requested"
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text(
+        f"session:\n  workspace: {configured.as_posix()}\n",
+        encoding="utf-8",
+    )
+
+    c = Config.load(str(config_file), workspace=str(requested))
+
+    assert Path(c.session.workspace) == requested.resolve()
+
+
+def test_workspace_env_overrides_config(tmp_path, monkeypatch):
+    configured = tmp_path / "configured"
+    requested = tmp_path / "env_workspace"
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text(
+        f"session:\n  workspace: {configured.as_posix()}\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("SOPHIA_WORKSPACE", str(requested))
+    c = Config.load(str(config_file))
+
+    assert Path(c.session.workspace) == requested.resolve()

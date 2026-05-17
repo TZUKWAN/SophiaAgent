@@ -7,6 +7,7 @@ Uses rich for rendering, prompt_toolkit for interactive input.
 import argparse
 import json
 import logging
+import os
 import sys
 import time
 from typing import Any, Dict, List, Optional
@@ -560,12 +561,19 @@ def _prompt_style():
     })
 
 
+def _default_workspace_override() -> str:
+    """Use the caller's current directory as the CLI default workspace."""
+    return os.getcwd()
+
+
 # ── Chat Command ────────────────────────────────────────────────
 
 def cmd_chat(args):
     install_process_lifecycle_hooks()
-    agent = _create_agent(args.config, args.model)
-    config = Config.load(args.config)
+    config = Config.load(args.config, workspace=args.workspace)
+    if args.model:
+        config.model.name = args.model
+    agent = SophiaAgent(config)
     session_mgr = SessionManager(config.session.db_path)
 
     console = Console()
@@ -695,8 +703,8 @@ def setup_logging(verbose: bool = False):
     )
 
 
-def _create_agent(config_path=None, model=None) -> SophiaAgent:
-    config = Config.load(config_path)
+def _create_agent(config_path=None, model=None, workspace=None) -> SophiaAgent:
+    config = Config.load(config_path, workspace=workspace)
     if model:
         config.model.name = model
     return SophiaAgent(config)
@@ -806,7 +814,7 @@ def _mcp_prompt_messages(name: str, arguments: Dict[str, Any]) -> List[Dict[str,
 
 def cmd_exec(args):
     install_process_lifecycle_hooks()
-    agent = _create_agent(args.config, args.model)
+    agent = _create_agent(args.config, args.model, args.workspace)
     prompt = args.prompt
     if prompt == "-" or (not prompt and not sys.stdin.isatty()):
         prompt = sys.stdin.read().strip()
@@ -871,7 +879,7 @@ def _exec_json(agent: SophiaAgent, prompt: str, max_turns: int = 50) -> Dict:
 
 def cmd_tools_list(args):
     install_process_lifecycle_hooks()
-    agent = _create_agent(args.config, args.model)
+    agent = _create_agent(args.config, args.model, args.workspace)
     if args.json:
         schemas = agent.tools.get_schemas()
         print(json.dumps({
@@ -892,7 +900,7 @@ def cmd_tools_list(args):
 
 def cmd_tools_call(args):
     install_process_lifecycle_hooks()
-    agent = _create_agent(args.config, args.model)
+    agent = _create_agent(args.config, args.model, args.workspace)
     tool_name = args.tool_name
     if tool_name not in agent.tools._tools:
         print(f"Error: unknown tool '{tool_name}'", file=sys.stderr)
@@ -957,7 +965,7 @@ def cmd_web(args):
     install_process_lifecycle_hooks()
     import uvicorn
     from sophia.web import create_app
-    config = Config.load(args.config)
+    config = Config.load(args.config, workspace=args.workspace)
     app = create_app(config)
     port = args.port or 8080
     host = args.host or "0.0.0.0"
@@ -987,7 +995,7 @@ def _serve_http(args):
     install_process_lifecycle_hooks()
     import uvicorn
     from sophia.web import create_app
-    config = Config.load(args.config)
+    config = Config.load(args.config, workspace=args.workspace)
     app = create_app(config)
     port = args.port or 8080
     host = args.host or "0.0.0.0"
@@ -1000,7 +1008,7 @@ def _serve_http(args):
 
 def _serve_stdio(args):
     install_process_lifecycle_hooks()
-    agent = _create_agent(args.config, args.model)
+    agent = _create_agent(args.config, args.model, args.workspace)
     _initialized = False
 
     def _send(obj: Dict):
@@ -1119,6 +1127,11 @@ def main():
     )
     parser.add_argument("--config", default=None, help="Path to config.yaml")
     parser.add_argument("--model", default=None, help="Override model name")
+    parser.add_argument(
+        "--workspace",
+        default=_default_workspace_override(),
+        help="Override workspace directory. Use '.' to bind Sophia to the current project.",
+    )
     parser.add_argument("--verbose", "-v", action="store_true", help="Debug logging")
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")

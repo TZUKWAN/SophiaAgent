@@ -176,7 +176,7 @@ class Config:
         return config
 
     @classmethod
-    def load(cls, path: Optional[str] = None) -> "Config":
+    def load(cls, path: Optional[str] = None, workspace: Optional[str] = None) -> "Config":
         """Load config from YAML file, with env var overrides.
 
         If no config file exists, auto-create a default one.
@@ -199,6 +199,10 @@ class Config:
         if not config_path.exists():
             # Auto-create default config file
             config = cls.create_default()
+            requested_workspace = workspace or os.environ.get("SOPHIA_WORKSPACE")
+            if requested_workspace:
+                config.session.workspace = str(Path(requested_workspace).expanduser().resolve())
+                Path(config.session.workspace).mkdir(parents=True, exist_ok=True)
             config_path.parent.mkdir(parents=True, exist_ok=True)
             try:
                 with open(config_path, "w", encoding="utf-8") as f:
@@ -274,8 +278,8 @@ class Config:
 
             # Parse loop section
             if "loop" in data:
-                l = data["loop"]
-                config.loop = LoopConfig(max_concurrent=l.get("max_concurrent", 3))
+                loop_data = data["loop"]
+                config.loop = LoopConfig(max_concurrent=loop_data.get("max_concurrent", 3))
 
             # Parse context section
             if "context" in data:
@@ -301,6 +305,12 @@ class Config:
         if env_model:
             config.model.name = env_model
 
+        env_workspace = os.environ.get("SOPHIA_WORKSPACE")
+        if workspace:
+            config.session.workspace = workspace
+        elif env_workspace:
+            config.session.workspace = env_workspace
+
         # Expand ~ in paths and set defaults
         home = Path.home()
         if config.session.db_path:
@@ -313,6 +323,7 @@ class Config:
             config.session.workspace = str(home / "SophiaWorkspace")
 
         # Ensure workspace directory exists
+        config.session.workspace = str(Path(config.session.workspace).expanduser().resolve())
         Path(config.session.workspace).mkdir(parents=True, exist_ok=True)
 
         return config
