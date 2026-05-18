@@ -330,7 +330,8 @@ class LoopManager:
                     return
 
                 # Execute action
-                self._execute_tick(loop_id, spec)
+                if self._execute_tick(loop_id, spec):
+                    return
 
             elif spec.trigger_type == "condition":
                 poll_interval = spec.trigger_config.get("poll_seconds", 10)
@@ -359,7 +360,8 @@ class LoopManager:
 
                 # If condition result looks truthy, execute the action
                 if _is_truthy(check_result):
-                    self._execute_tick(loop_id, spec)
+                    if self._execute_tick(loop_id, spec):
+                        return
             else:
                 logger.error("Loop %s has unknown trigger_type: %s",
                              loop_id, spec.trigger_type)
@@ -370,17 +372,39 @@ class LoopManager:
         # Loop exited because stop_event was set
         logger.debug("Loop %s thread exiting (stop_event set)", loop_id)
 
-    def _execute_tick(self, loop_id: str, spec: LoopSpec):
-        """Execute one iteration of the loop."""
+    def _execute_tick(self, loop_id: str, spec: LoopSpec) -> bool:
+        """Execute one iteration of the loop.
+
+        Returns True when this tick completed the loop's configured work.
+        """
         try:
             result = self._run_fn(spec.action_prompt)
             self._update_status(loop_id, "running", last_result=result, increment=True)
+            updated = self.get(loop_id)
             self.hooks.emit(HookEvent.LOOP_TICK, {
                 "loop_id": loop_id,
                 "session_id": spec.session_id,
                 "iteration": spec.current_iteration + 1,
                 "result": result,
             })
+            if (
+                updated is not None
+                and updated.max_iterations > 0
+                and updated.current_iteration >= updated.max_iterations
+            ):
+                self._update_status(loop_id, "completed", last_result=result)
+                self.hooks.emit(HookEvent.LOOP_COMPLETE, {
+                    "loop_id": loop_id,
+                    "session_id": updated.session_id,
+                    "iterations": updated.current_iteration,
+                })
+                logger.info(
+                    "Loop %s completed (max_iterations=%d reached)",
+                    loop_id,
+                    updated.max_iterations,
+                )
+                return True
+            return False
         except Exception as e:
             logger.error("Loop %s tick failed: %s", loop_id, e)
             self._update_status(loop_id, "failed", str(e))
@@ -388,6 +412,7 @@ class LoopManager:
                 "loop_id": loop_id,
                 "error": str(e),
             })
+            return True
 
 
 # ── Helpers ───────────────────────────────────────────────────
