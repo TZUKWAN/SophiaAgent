@@ -17,15 +17,14 @@ const App = {
         this.bindEvents();
         this.connectWebSocket();
 
-        // Workspace gate: must select workspace before chatting
+        // Restore workspace label in sidebar
         if (this.state.currentWorkspace) {
             const shortName = this.state.currentWorkspace.split(/[\\/]/).pop() || this.state.currentWorkspace;
             const subtitle = document.getElementById('logoSubtitle');
             if (subtitle) subtitle.textContent = shortName;
-            this.selectWorkspace(this.state.currentWorkspace, false);
-        } else {
-            this.showWorkspaceModal();
         }
+
+        this.loadSessions();
     },
 
     bindEvents() {
@@ -479,14 +478,13 @@ const App = {
         try {
             await fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
             if (this.state.sessionId === sessionId) {
-                this.state.sessionId = null;
-                this.newChat();
+                this.resetChatUI();
             }
             this.loadSessions();
         } catch(e) { console.error('Delete session failed', e); }
     },
 
-    newChat() {
+    resetChatUI() {
         this.state.sessionId = null;
         const messages = document.getElementById('messages');
         messages.innerHTML = '';
@@ -496,6 +494,10 @@ const App = {
             messages.appendChild(empty);
         }
         this.renderSessions();
+    },
+
+    newChat() {
+        this.showWorkspaceModal();
     },
 
     // ── Workspace Selection ────────────────
@@ -566,7 +568,7 @@ const App = {
             const subtitle = document.getElementById('logoSubtitle');
             if (subtitle) subtitle.textContent = shortName;
             if (hideModal) this.hideWorkspaceModal();
-            this.newChat();
+            this.resetChatUI();
             this.loadSessions();
             this.showToast(`Workspace: ${shortName}`);
         } catch(e) {
@@ -640,7 +642,7 @@ const App = {
                 if (newWs && newWs !== this.state.currentWorkspace) {
                     localStorage.setItem('sophia-workspace', newWs);
                     this.state.currentWorkspace = newWs;
-                    this.newChat();
+                    this.resetChatUI();
                 }
                 this.showToast('Settings saved');
                 this.closeSettings();
