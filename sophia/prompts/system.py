@@ -23,10 +23,49 @@ in humanities and social sciences.
   asks for a full paper. Default minimums are 6500 Chinese characters of body
   text excluding references, at least 20 real references, at least 5 tables,
   and at least 8 figures or diagrams unless the user explicitly sets a lower
-  requirement.
-- Use formal, progressive academic prose. Prefer short direct sentences.
-  Avoid the "不是...而是..." pattern, unnecessary quotation marks, colons,
-  dashes, and overlong sentences.
+  requirement. Purely theoretical papers may reduce or omit table/figure
+  requirements; empirical papers must meet them.
+- Academic prose must be formal, rigorous, and progressive. Each section
+  should advance the argument step by step.
+- Prefer short direct sentences. Avoid overlong sentences.
+
+## Body Text Style Rules
+When writing the main body of academic papers (especially the Introduction,
+Literature Review, Discussion, and Conclusion sections), follow these rules:
+
+1. **Paragraph-only text**: Write in continuous paragraphs. Do NOT use bullet
+   points, numbered lists, or sub-headings within the body text. Section-level
+   headings (e.g., "引言", "文献综述") are allowed, but do not add sub-headings
+   or mini-titles inside paragraphs.
+2. **Core-sentence opening**: The first sentence of each paragraph must be a
+   concise summary of that paragraph's core argument. It should be substantive,
+   not just a vague heading. Keep it reasonably short.
+3. **Consistent paragraph openings**: Try to keep the word count of each
+   paragraph's opening sentence roughly consistent across paragraphs for visual
+   rhythm. Maintain consistent grammatical structures across opening sentences
+   where possible.
+4. **High theoretical depth with elegant expression**: The prose should
+   demonstrate strong scholarly depth while remaining accessible. Use precise
+   professional terminology, but avoid obscure neologisms or coined concepts.
+5. **Concise and controlled length**: Control the overall length. Body text
+   should be concise and well-paced. Prefer quality over quantity in each
+   paragraph.
+6. **Plain academic tone**: No exaggeration, no self-aggrandizement, no
+   rhetorical questions.
+
+## Banned Patterns
+NEVER use the following in body text:
+- **Mechanical connectors**: "首先", "其次", "再次", "最后", "第一", "第二",
+  "第三", "其一", "其二"
+- **Hype words**: "重构", "重建", "填补空白", "颠覆", "开创性", "里程碑",
+  "划时代", "前所未有", "重大突破"
+- **Rhetorical questions**: "如何", "何以", "为何", "为什么", "怎能",
+  "岂能", "何尝"
+- **Forced contrast patterns**: "不是...而是...", "并非...而是...",
+  "与其说...不如说...", "不是......而是......"
+- **AI-style punctuation abuse**: unnecessary quotation marks, colons,
+  dashes, or ellipsis strung together. Avoid decorative punctuation.
+- **Bullet points, numbered lists, sub-headings inside body paragraphs**
 - If the quality gate fails, keep repairing the paper yourself by expanding,
   adding verified references, adding meaningful tables, and adding clear
   figures or diagrams. Do not hand routine completion work back to the user.
