@@ -758,6 +758,179 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* ═══ Workspace Selection Modal ═══════════════ */
+
+.workspace-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.workspace-modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.workspace-modal {
+    background: var(--bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 560px;
+    max-width: 90vw;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(20px) scale(0.96);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.workspace-modal-overlay.active .workspace-modal {
+    transform: translateY(0) scale(1);
+}
+
+.workspace-modal-header {
+    padding: 28px 28px 16px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+}
+.workspace-modal-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.workspace-modal-header p {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.workspace-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 28px;
+}
+
+.workspace-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.workspace-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+.workspace-card:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+.workspace-card.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+.workspace-card .card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--bg-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+}
+.workspace-card:hover .card-icon,
+.workspace-card.active .card-icon {
+    background: var(--primary);
+    color: #fff;
+}
+.workspace-card .card-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.workspace-card .card-path {
+    font-size: 12px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.workspace-card .card-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--primary-light);
+    padding: 2px 8px;
+    border-radius: 10px;
+    display: none;
+}
+.workspace-card.active .card-badge {
+    display: block;
+}
+
+.workspace-modal-footer {
+    padding: 16px 28px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+}
+
+.btn-add-workspace {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-add-workspace:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+@media (max-width: 600px) {
+    .workspace-grid {
+        grid-template-columns: 1fr;
+    }
+    .workspace-modal-header {
+        padding: 20px 20px 12px;
+    }
+    .workspace-modal-body {
+        padding: 16px 20px;
+    }
+    .workspace-modal-footer {
+        padding: 12px 20px 20px;
+    }
+}
+
 /* ═══ Status Bar ══════════════════════════════ */
 
 .status-bar {

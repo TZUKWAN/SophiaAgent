@@ -130,6 +130,20 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
             raise HTTPException(status_code=400, detail=str(e))
         return {"workspace": path, "created": True}
 
+    @app.post("/api/workspace/switch")
+    async def switch_workspace(request: Request):
+        body = await request.json()
+        new_ws = body.get("workspace", "")
+        if not new_ws:
+            raise HTTPException(status_code=400, detail="workspace is required")
+        try:
+            Path(new_ws).mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        config.session.workspace = new_ws
+        agent.reconfigure(config)
+        return {"workspace": new_ws, "switched": True}
+
     # ── Chat API ─────────────────────────────────────────────
 
     @app.post("/api/chat")

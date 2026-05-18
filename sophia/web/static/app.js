@@ -11,14 +11,24 @@ const App = {
         currentTextEl: null,
         currentActivityEl: null,
         currentStreamText: '',
+        currentWorkspace: localStorage.getItem('sophia-workspace') || '',
     },
 
     init() {
         this.applyTheme(this.state.theme);
         this.bindEvents();
-        this.loadSessions();
         this.connectWebSocket();
         this.pollUsage();
+
+        // Workspace gate: must select workspace before chatting
+        if (this.state.currentWorkspace) {
+            const shortName = this.state.currentWorkspace.split(/[\\/]/).pop() || this.state.currentWorkspace;
+            const subtitle = document.getElementById('logoSubtitle');
+            if (subtitle) subtitle.textContent = shortName;
+            this.selectWorkspace(this.state.currentWorkspace, false);
+        } else {
+            this.showWorkspaceModal();
+        }
     },
 
     applyTheme(theme) {
@@ -65,6 +75,14 @@ const App = {
             const path = prompt('Enter workspace path:');
             if (path && path.trim()) {
                 this.addWorkspace(path.trim());
+            }
+        };
+
+        $('switchWorkspaceBtn').onclick = () => this.showWorkspaceModal();
+        $('modalAddWorkspaceBtn').onclick = () => {
+            const path = prompt('Enter workspace path:');
+            if (path && path.trim()) {
+                this.addWorkspace(path.trim()).then(() => this.loadWorkspacesForModal());
             }
         };
     },
@@ -497,6 +515,79 @@ const App = {
         this.renderSessions();
     },
 
+    // ── Workspace Selection ────────────────
+
+    showWorkspaceModal() {
+        document.getElementById('workspaceModalOverlay').classList.add('active');
+        this.loadWorkspacesForModal();
+    },
+
+    hideWorkspaceModal() {
+        document.getElementById('workspaceModalOverlay').classList.remove('active');
+    },
+
+    async loadWorkspacesForModal() {
+        try {
+            const resp = await fetch('/api/workspaces');
+            const data = await resp.json();
+            this.renderWorkspaceModal(data.workspaces || []);
+        } catch(e) { console.error('Load workspaces failed', e); }
+    },
+
+    renderWorkspaceModal(workspaces) {
+        const grid = document.getElementById('workspaceGrid');
+        grid.innerHTML = '';
+
+        if (workspaces.length === 0) {
+            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:20px;">No workspaces found. Add one below.</div>';
+            return;
+        }
+
+        workspaces.forEach(path => {
+            const card = document.createElement('div');
+            card.className = 'workspace-card' + (path === this.state.currentWorkspace ? ' active' : '');
+            card.onclick = () => this.selectWorkspace(path);
+
+            const name = path.split(/[\\/]/).pop() || path;
+
+            card.innerHTML = `
+                <div class="card-badge">Selected</div>
+                <div class="card-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                </div>
+                <div class="card-name" title="${name}">${name}</div>
+                <div class="card-path" title="${path}">${path}</div>
+            `;
+            grid.appendChild(card);
+        });
+    },
+
+    async selectWorkspace(path, hideModal = true) {
+        try {
+            const resp = await fetch('/api/workspace/switch', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({workspace: path}),
+            });
+            if (!resp.ok) {
+                const err = await resp.json();
+                throw new Error(err.detail || 'Switch failed');
+            }
+            localStorage.setItem('sophia-workspace', path);
+            this.state.currentWorkspace = path;
+            const shortName = path.split(/[\\/]/).pop() || path;
+            const subtitle = document.getElementById('logoSubtitle');
+            if (subtitle) subtitle.textContent = shortName;
+            if (hideModal) this.hideWorkspaceModal();
+            this.newChat();
+            this.loadSessions();
+            this.showToast(`Workspace: ${shortName}`);
+        } catch(e) {
+            this.showToast('Error: ' + e.message);
+            console.error('Switch workspace failed', e);
+        }
+    },
+
     // ── Settings ───────────────────────────
 
     async openSettings() {
@@ -532,6 +623,12 @@ const App = {
                 if (w === data.workspace) opt.selected = true;
                 select.appendChild(opt);
             });
+            // Update logo subtitle with current workspace
+            if (data.workspace) {
+                const shortName = data.workspace.split(/[\\/]/).pop() || data.workspace;
+                const subtitle = document.getElementById('logoSubtitle');
+                if (subtitle) subtitle.textContent = shortName;
+            }
         } catch(e) { console.error('Load settings failed', e); }
     },
 
@@ -554,6 +651,12 @@ const App = {
             if (resp.ok) {
                 const data = await resp.json();
                 document.getElementById('modelBadge').textContent = data.settings.model;
+                const newWs = data.settings.workspace;
+                if (newWs && newWs !== this.state.currentWorkspace) {
+                    localStorage.setItem('sophia-workspace', newWs);
+                    this.state.currentWorkspace = newWs;
+                    this.newChat();
+                }
                 this.showToast('Settings saved');
                 this.closeSettings();
                 this.loadSessions();
