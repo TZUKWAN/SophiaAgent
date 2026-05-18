@@ -37,32 +37,55 @@ Minimum deliverables:
    references from workspace evidence, citation tools, literature tools, or
    otherwise verifiable sources. Never invent authors, years, journal names,
    DOI values, page numbers, or statistical facts.
-3. The paper must contain at least 5 tables. Tables must be meaningful for the
-   argument, such as concept comparison, literature matrix, mechanism table,
-   challenge table, path table, variable table, evidence table, or policy table.
-4. The paper must contain at least 8 figures. If an actual image file cannot be
-   generated, provide a clearly titled figure block with a Mermaid diagram or a
-   precise image-generation/data-visualization instruction that can be rendered
-   later. Do not count decorative text as a figure.
-5. Framework or architecture diagrams must be clear. Labels must be large and
-   readable. Prefer simple node names, high contrast, and no dense tiny text.
+3. The paper must contain at least 5 tables and 8 figures/diagrams for empirical
+   papers. Purely theoretical papers may reduce or omit tables and figures,
+   replacing them with conceptual diagrams, argument flowcharts, or literature
+   matrices as needed.
+4. Tables must be meaningful for the argument, such as concept comparison,
+   literature matrix, mechanism table, challenge table, path table, variable
+   table, evidence table, or policy table.
+5. Figures must be substantive. If an actual image file cannot be generated,
+   provide a clearly titled figure block with a Mermaid diagram or a precise
+   image-generation/data-visualization instruction that can be rendered later.
+   Do not count decorative text as a figure. Framework or architecture diagrams
+   must be clear with large readable labels, simple node names, and high contrast.
 6. Data visualizations must be one chart per figure. Do not combine many
    unrelated visualizations into one image. Each chart needs its own title,
    data source note, and interpretation.
-7. Academic prose must be formal, rigorous, and progressive. Each section
-   should advance the argument step by step.
-8. Avoid the phrase pattern "不是...而是...". Give direct judgments.
-9. Avoid unnecessary quotation marks, colons, dashes, and long sentences.
-   Prefer shorter sentences with clear subject, predicate, and object.
-10. Do not add heading levels the user forbids. If the user asks for no third
+
+Body text style rules:
+7. Write in continuous paragraphs. Do NOT use bullet points, numbered lists,
+   or sub-headings within the body text. Section-level headings (e.g., "引言",
+   "文献综述") are allowed; mini-headings inside paragraphs are not.
+8. The first sentence of each paragraph must be a concise summary of that
+   paragraph's core argument. Keep opening sentences roughly consistent in
+   length across paragraphs for visual rhythm. Maintain consistent grammatical
+   structures across opening sentences where possible.
+9. Academic prose must be formal, rigorous, and progressive. Each section
+   should advance the argument step by step. Prefer short direct sentences.
+10. High theoretical depth with elegant expression. Use precise professional
+    terminology, but avoid obscure neologisms or coined concepts.
+
+Banned patterns (NEVER use in body text):
+11. Mechanical connectors: "首先", "其次", "再次", "最后", "第一", "第二",
+    "第三", "其一", "其二".
+12. Hype words: "重构", "重建", "填补空白", "颠覆", "开创性", "里程碑",
+    "划时代", "前所未有", "重大突破".
+13. Rhetorical questions: "如何", "何以", "为何", "为什么", "怎能", "岂能",
+    "何尝".
+14. Forced contrast patterns: "不是...而是...", "并非...而是...",
+    "与其说...不如说...".
+15. Unnecessary quotation marks, colons, dashes, and ellipsis strung together.
+    Avoid decorative punctuation.
+16. Do not add heading levels the user forbids. If the user asks for no third
     level headings, use only first-level and second-level headings.
-11. Before the final answer ends, internally verify the minimum length,
+17. Before the final answer ends, internally verify the minimum length,
     reference count, table count, figure count, citation consistency, and
     language style. If any item is below the threshold, continue expanding,
     adding verified references, and adding meaningful tables or figures before
     finalizing. Only report an irreducible evidence gap after attempting
     self-remediation with all available workspace and tool evidence.
-12. If the user asks for Word/DOCX, the final deliverable must be exported as
+18. If the user asks for Word/DOCX, the final deliverable must be exported as
     Word/DOCX. Do not treat Markdown as the final requested deliverable.
 """
 
@@ -157,24 +180,120 @@ def build_reference_priority_notice(
     )
 
 
+# Style rule check patterns
+_BANNED_WORDS = [
+    ("首先", "机械连接词"),
+    ("其次", "机械连接词"),
+    ("再次", "机械连接词"),
+    ("最后", "机械连接词"),
+    ("第一", "机械连接词"),
+    ("第二", "机械连接词"),
+    ("第三", "机械连接词"),
+    ("其一", "机械连接词"),
+    ("其二", "机械连接词"),
+    ("重构", "夸张吹嘘词"),
+    ("重建", "夸张吹嘘词"),
+    ("填补空白", "夸张吹嘘词"),
+    ("颠覆", "夸张吹嘘词"),
+    ("开创性", "夸张吹嘘词"),
+    ("里程碑", "夸张吹嘘词"),
+    ("划时代", "夸张吹嘘词"),
+    ("前所未有", "夸张吹嘘词"),
+    ("重大突破", "夸张吹嘘词"),
+    ("如何", "反问词"),
+    ("何以", "反问词"),
+    ("为何", "反问词"),
+    ("为什么", "反问词"),
+    ("怎能", "反问词"),
+    ("岂能", "反问词"),
+    ("何尝", "反问词"),
+]
+
+_BULLET_LIST_RE = re.compile(r"(?m)^\s*[-*•]\s+")
+_NUMBERED_LIST_RE = re.compile(r"(?m)^\s*\d+[\.、)）]\s+")
+_FORCED_CONTRAST_RE = re.compile(r"不是.{0,20}而是|并非.{0,20}而是|与其说.{0,20}不如说")
+_RHETORICAL_QUESTION_RE = re.compile(r"[如何何以为何为什么怎能岂能何尝].{0,15}[?？]")
+
+
+def _is_theoretical_paper(body: str) -> bool:
+    """Heuristic: detect if paper is purely theoretical (no empirical analysis)."""
+    empirical_keywords = [
+        "实证", "回归", "did", "difference-in-differences", "双重差分",
+        "面板数据", "问卷", "调查", "实验", "t检验", "方差分析", "anova",
+        "回归分析", "描述统计", "中介效应", "调节效应", "结构方程",
+        "数据", "样本", "变量", "系数", "显著性", "p值",
+    ]
+    lower_body = body.lower()
+    empirical_hits = sum(1 for kw in empirical_keywords if kw in lower_body)
+    return empirical_hits < 3
+
+
+def _detect_banned_words(body: str) -> List[str]:
+    issues = []
+    for word, category in _BANNED_WORDS:
+        if word in body:
+            issues.append(f"检测到禁用词「{word}」（{category}），请删除或替换。")
+    return issues
+
+
+def _detect_forced_contrast(body: str) -> List[str]:
+    issues = []
+    for m in _FORCED_CONTRAST_RE.finditer(body):
+        issues.append(
+            f"检测到强制转折句式「{m.group()}」，请改为直接判断。"
+        )
+    return issues
+
+
+def _detect_bullet_lists(body: str) -> List[str]:
+    issues = []
+    bullet_count = len(_BULLET_LIST_RE.findall(body))
+    numbered_count = len(_NUMBERED_LIST_RE.findall(body))
+    if bullet_count > 0:
+        issues.append(f"检测到 {bullet_count} 处无序列表（项目符号），正文应使用段落化文本。")
+    if numbered_count > 0:
+        issues.append(f"检测到 {numbered_count} 处有序列表（编号），正文应使用段落化文本。")
+    return issues
+
+
+def _detect_rhetorical_questions(body: str) -> List[str]:
+    issues = []
+    for m in _RHETORICAL_QUESTION_RE.finditer(body):
+        issues.append(f"检测到反问句「{m.group()}」，请改为直接陈述。")
+    return issues[:3]  # Limit to avoid flooding
+
+
 def inspect_generated_paper(content: str) -> PaperQualityReport:
     body, refs = _split_body_and_references(content)
     body_chars = _count_body_chars(body)
     reference_count = _count_references(refs)
     table_count = _count_tables(body)
     figure_count = _count_figures(body)
+    is_theoretical = _is_theoretical_paper(body)
 
     issues: List[str] = []
     if body_chars < MIN_BODY_CHARS:
         issues.append(f"正文长度不足：{body_chars} 字，最低要求 {MIN_BODY_CHARS} 字。")
     if reference_count < MIN_REFERENCES:
         issues.append(f"参考文献不足：{reference_count} 条，最低要求 {MIN_REFERENCES} 条。")
-    if table_count < MIN_TABLES:
-        issues.append(f"表格不足：{table_count} 个，最低要求 {MIN_TABLES} 个。")
-    if figure_count < MIN_FIGURES:
-        issues.append(f"图片或图示不足：{figure_count} 张，最低要求 {MIN_FIGURES} 张。")
-    if re.search(r"不是.{0,20}而是", body):
-        issues.append("正文仍包含“不是...而是...”式转折，需要改为直接判断。")
+
+    # Table/figure requirements: relaxed for purely theoretical papers
+    if is_theoretical:
+        if table_count < 2:
+            issues.append(f"纯理论论文表格不足：{table_count} 个，建议至少 2 个（如概念比较表、文献矩阵）。")
+        if figure_count < 2:
+            issues.append(f"纯理论论文图示不足：{figure_count} 张，建议至少 2 个（如论证流程图、概念框架图）。")
+    else:
+        if table_count < MIN_TABLES:
+            issues.append(f"表格不足：{table_count} 个，最低要求 {MIN_TABLES} 个。")
+        if figure_count < MIN_FIGURES:
+            issues.append(f"图片或图示不足：{figure_count} 张，最低要求 {MIN_FIGURES} 张。")
+
+    # Style checks
+    issues.extend(_detect_banned_words(body))
+    issues.extend(_detect_forced_contrast(body))
+    issues.extend(_detect_bullet_lists(body))
+    issues.extend(_detect_rhetorical_questions(body))
 
     return PaperQualityReport(
         body_chars=body_chars,

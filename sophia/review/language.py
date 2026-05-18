@@ -35,6 +35,20 @@ class LanguageChecker:
         "in the event that",
     ]
 
+    # Chinese banned words for academic body text
+    BANNED_CONNECTORS = {
+        "首先", "其次", "再次", "最后", "第一", "第二", "第三",
+        "其一", "其二", "其三", "一是", "二是", "三是",
+    }
+    BANNED_HYPE_WORDS = {
+        "重构", "重建", "填补空白", "颠覆", "开创性", "里程碑",
+        "划时代", "前所未有", "重大突破", "革命性", "独创",
+    }
+    BANNED_RHETORICAL = {"如何", "何以", "为何", "为什么", "怎能", "岂能", "何尝"}
+    FORCED_CONTRAST_RE = re.compile(r"不是[^，。！？\n]{0,20}而是|并非[^，。！？\n]{0,20}而是|与其说[^，。！？\n]{0,20}不如说")
+    BULLET_LIST_RE = re.compile(r"(?m)^\s*[-*•]\s+")
+    NUMBERED_LIST_RE = re.compile(r"(?m)^\s*\d+[\.、)）]\s+")
+
     # Repeated words pattern (same word within 10 words)
     REPEAT_WINDOW = 10
 
@@ -48,6 +62,10 @@ class LanguageChecker:
         findings.extend(self._check_academic_style(text))
         findings.extend(self._check_weak_phrases(text))
         findings.extend(self._check_redundancy(text))
+        findings.extend(self._check_chinese_banned_words(text))
+        findings.extend(self._check_forced_contrast(text))
+        findings.extend(self._check_bullet_lists(text))
+        findings.extend(self._check_rhetorical_questions(text))
 
         for f in findings:
             sev = f.get("severity", "minor")
@@ -123,6 +141,81 @@ class LanguageChecker:
                         break  # Only flag once per word per sentence
 
         return issues[:10]
+
+    def _check_chinese_banned_words(self, text: str) -> List[Dict]:
+        """Check for banned Chinese words in academic body text."""
+        issues = []
+        for word in self.BANNED_CONNECTORS:
+            if word in text:
+                issues.append({
+                    "type": "banned_connector",
+                    "severity": "major",
+                    "location": "text",
+                    "detail": f"机械连接词「{word}」出现在正文中。",
+                    "suggestion": "删除该词，改为自然段落过渡。",
+                })
+        for word in self.BANNED_HYPE_WORDS:
+            if word in text:
+                issues.append({
+                    "type": "banned_hype_word",
+                    "severity": "major",
+                    "location": "text",
+                    "detail": f"夸张吹嘘词「{word}」出现在正文中。",
+                    "suggestion": "使用平实学术表达替代。",
+                })
+        return issues
+
+    def _check_forced_contrast(self, text: str) -> List[Dict]:
+        """Check for forced contrast patterns like '不是...而是...'."""
+        issues = []
+        for m in self.FORCED_CONTRAST_RE.finditer(text):
+            issues.append({
+                "type": "forced_contrast",
+                "severity": "major",
+                "location": "text",
+                "detail": f"强制转折句式「{m.group()}」出现在正文中。",
+                "suggestion": "改为直接判断，避免'不是...而是...'式表达。",
+            })
+        return issues
+
+    def _check_bullet_lists(self, text: str) -> List[Dict]:
+        """Check for bullet points or numbered lists in body text."""
+        issues = []
+        bullet_count = len(self.BULLET_LIST_RE.findall(text))
+        numbered_count = len(self.NUMBERED_LIST_RE.findall(text))
+        if bullet_count > 0:
+            issues.append({
+                "type": "bullet_list_in_body",
+                "severity": "major",
+                "location": "text",
+                "detail": f"检测到 {bullet_count} 处无序列表（项目符号）出现在正文中。",
+                "suggestion": "将列表内容改写为连续段落化文本。",
+            })
+        if numbered_count > 0:
+            issues.append({
+                "type": "numbered_list_in_body",
+                "severity": "major",
+                "location": "text",
+                "detail": f"检测到 {numbered_count} 处有序列表（编号）出现在正文中。",
+                "suggestion": "将列表内容改写为连续段落化文本。",
+            })
+        return issues
+
+    def _check_rhetorical_questions(self, text: str) -> List[Dict]:
+        """Check for rhetorical questions in body text."""
+        issues = []
+        for word in self.BANNED_RHETORICAL:
+            # Look for the word followed by a question mark within 15 chars
+            pattern = re.compile(re.escape(word) + r"[^，。！？\n]{0,15}[?？]")
+            for m in pattern.finditer(text):
+                issues.append({
+                    "type": "rhetorical_question",
+                    "severity": "major",
+                    "location": "text",
+                    "detail": f"反问句「{m.group()}」出现在正文中。",
+                    "suggestion": "改为直接陈述句。",
+                })
+        return issues[:5]  # Limit to avoid flooding
 
     @staticmethod
     def _extract_full_text(doc: Dict) -> str:
