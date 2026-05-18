@@ -552,12 +552,14 @@ const App = {
     },
 
     async selectWorkspace(path, hideModal = true) {
+        console.log('[selectWorkspace] clicked:', path);
         try {
             const resp = await fetch('/api/workspace/switch', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({workspace: path}),
             });
+            console.log('[selectWorkspace] resp.ok:', resp.ok, 'status:', resp.status);
             if (!resp.ok) {
                 const err = await resp.json();
                 throw new Error(err.detail || 'Switch failed');
@@ -571,6 +573,7 @@ const App = {
             this.resetChatUI();
             this.loadSessions();
             this.showToast(`Workspace: ${shortName}`);
+            console.log('[selectWorkspace] success:', shortName);
         } catch(e) {
             this.showToast('Error: ' + e.message);
             console.error('Switch workspace failed', e);
