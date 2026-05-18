@@ -3,8 +3,10 @@
 FastAPI + WebSocket backend with ChatGPT-style web UI.
 """
 
+import asyncio
 import logging
 import os
+import signal
 import uuid
 from pathlib import Path
 from typing import Optional
@@ -21,6 +23,32 @@ from sophia.session import SessionManager
 logger = logging.getLogger(__name__)
 
 WEB_DIR = os.path.dirname(__file__)
+
+# Active WebSocket connection counter for auto-shutdown
+_active_connections = 0
+_shutdown_task = None
+
+
+def _schedule_shutdown(delay: float = 5.0):
+    """Schedule process exit after delay if no connections remain."""
+    global _shutdown_task
+
+    def _cancel_if_exists():
+        global _shutdown_task
+        if _shutdown_task is not None:
+            _shutdown_task.cancel()
+            _shutdown_task = None
+
+    _cancel_if_exists()
+
+    async def _delayed_exit():
+        await asyncio.sleep(delay)
+        if _active_connections == 0:
+            logger.info("No active connections, shutting down server.")
+            # Send SIGINT to self for graceful uvicorn shutdown
+            os.kill(os.getpid(), signal.SIGINT)
+
+    _shutdown_task = asyncio.create_task(_delayed_exit())
 
 
 def _mask_key(key: str) -> str:
@@ -192,7 +220,12 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
     @app.websocket("/api/chat/stream")
     async def chat_stream(websocket: WebSocket):
         """WebSocket endpoint for streaming chat."""
+        global _active_connections
         await websocket.accept()
+        _active_connections += 1
+        # Cancel pending shutdown when a new connection arrives
+        if _shutdown_task is not None:
+            _shutdown_task.cancel()
 
         session_id = None
 
@@ -265,6 +298,10 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
                     })
         except WebSocketDisconnect:
             logger.info("WebSocket disconnected: %s", session_id)
+        finally:
+            _active_connections -= 1
+            if _active_connections <= 0:
+                _schedule_shutdown()
 
     # ── Session API ──────────────────────────────────────────
 

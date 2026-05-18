@@ -31,6 +31,14 @@ const App = {
     bindEvents() {
         const $ = id => document.getElementById(id);
 
+        // Close WebSocket cleanly on page unload so the server can shut down
+        window.addEventListener('beforeunload', () => {
+            if (this.state.ws) {
+                this.state.ws.onclose = null; // prevent auto-reconnect
+                this.state.ws.close();
+            }
+        });
+
         $('newChatBtn').onclick = () => this.newChat();
         $('settingsBtn').onclick = () => this.openSettings();
         $('settingsClose').onclick = () => this.closeSettings();
