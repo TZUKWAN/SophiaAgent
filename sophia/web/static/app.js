@@ -6,7 +6,6 @@ const App = {
         sessions: [],
         loading: false,
         ws: null,
-        theme: localStorage.getItem('sophia-theme') || 'light',
         currentAssistantEl: null,
         currentTextEl: null,
         currentActivityEl: null,
@@ -15,10 +14,8 @@ const App = {
     },
 
     init() {
-        this.applyTheme(this.state.theme);
         this.bindEvents();
         this.connectWebSocket();
-        this.pollUsage();
 
         // Workspace gate: must select workspace before chatting
         if (this.state.currentWorkspace) {
@@ -31,21 +28,6 @@ const App = {
         }
     },
 
-    applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        const lightSheet = document.getElementById('hljs-light');
-        const darkSheet = document.getElementById('hljs-dark');
-        if (theme === 'dark') {
-            if (lightSheet) lightSheet.disabled = true;
-            if (darkSheet) darkSheet.disabled = false;
-        } else {
-            if (lightSheet) lightSheet.disabled = false;
-            if (darkSheet) darkSheet.disabled = true;
-        }
-        localStorage.setItem('sophia-theme', theme);
-        this.state.theme = theme;
-    },
-
     bindEvents() {
         const $ = id => document.getElementById(id);
 
@@ -54,13 +36,12 @@ const App = {
         $('settingsClose').onclick = () => this.closeSettings();
         $('settingsOverlay').onclick = () => this.closeSettings();
         $('saveSettingsBtn').onclick = () => this.saveSettings();
-        $('themeBtn').onclick = () => this.applyTheme(this.state.theme === 'dark' ? 'light' : 'dark');
         $('sidebarToggle').onclick = () => $('sidebar').classList.toggle('open');
 
         const input = $('messageInput');
         input.oninput = () => {
             input.style.height = 'auto';
-            input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+            input.style.height = Math.min(input.scrollHeight, 180) + 'px';
             $('sendBtn').disabled = !input.value.trim();
         };
         input.onkeydown = (e) => {
@@ -137,7 +118,7 @@ const App = {
                 this.updateToolCard('swarm', data.reason || 'Analyzing task complexity...', 'running');
                 break;
             case 'swarm_plan':
-                this.updateToolCard('swarm', `Plan: ${data.workflow || 'mixed'} · ${data.stages ? data.stages.length : 0} stages`, 'running');
+                this.updateToolCard('swarm', `Plan: ${data.workflow || 'mixed'} \u00b7 ${data.stages ? data.stages.length : 0} stages`, 'running');
                 break;
             case 'swarm_stage_start':
                 this.createToolCard(`swarm:${data.stage_id}`, 'running');
@@ -164,7 +145,6 @@ const App = {
             case 'done':
                 this.finalizeMessage(data.content || '');
                 if (data.session_id) this.state.sessionId = data.session_id;
-                if (data.usage) this.updateUsage(data.usage);
                 this.state.loading = false;
                 this.loadSessions();
                 break;
@@ -183,7 +163,6 @@ const App = {
         const text = input.value.trim();
         if (!text || this.state.loading) return;
 
-        // Hide empty state
         const empty = document.getElementById('emptyState');
         if (empty) empty.style.display = 'none';
 
@@ -194,7 +173,6 @@ const App = {
 
         this.state.loading = true;
 
-        // Use WebSocket for streaming
         const ws = this.state.ws;
         if (ws && ws.readyState === WebSocket.OPEN) {
             this.startAssistantMessage();
@@ -203,7 +181,6 @@ const App = {
                 session_id: this.state.sessionId || '',
             }));
         } else {
-            // Fallback to sync POST
             this.sendSync(text);
         }
     },
@@ -222,7 +199,6 @@ const App = {
             const data = await resp.json();
             if (data.session_id) this.state.sessionId = data.session_id;
             this.finalizeMessage(data.response || '');
-            if (data.usage) this.updateUsage(data.usage);
             this.loadSessions();
         } catch (e) {
             this.finalizeMessage('');
@@ -407,7 +383,6 @@ const App = {
         const container = document.getElementById('sessionsList');
         container.innerHTML = '';
 
-        // Group by workspace
         const grouped = {};
         this.state.sessions.forEach(s => {
             const ws = s.workspace || 'Default';
@@ -417,7 +392,7 @@ const App = {
 
         const keys = Object.keys(grouped);
         if (keys.length === 0) {
-            container.innerHTML = '<div style="padding:12px 16px;color:var(--text-muted);font-size:13px;">No conversations yet</div>';
+            container.innerHTML = '<div style="padding:12px 16px;color:var(--text-dim);font-size:12px;">No conversations yet</div>';
             return;
         }
 
@@ -448,7 +423,7 @@ const App = {
 
                 const del = document.createElement('button');
                 del.className = 'session-delete';
-                del.textContent = '×';
+                del.textContent = '\u00d7';
                 del.onclick = (e) => { e.stopPropagation(); this.deleteSession(s.id); };
 
                 item.appendChild(title);
@@ -539,7 +514,7 @@ const App = {
         grid.innerHTML = '';
 
         if (workspaces.length === 0) {
-            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:20px;">No workspaces found. Add one below.</div>';
+            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:20px;font-size:13px;">No workspaces found. Add one below.</div>';
             return;
         }
 
@@ -553,7 +528,7 @@ const App = {
             card.innerHTML = `
                 <div class="card-badge">Selected</div>
                 <div class="card-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                 </div>
                 <div class="card-name" title="${name}">${name}</div>
                 <div class="card-path" title="${path}">${path}</div>
@@ -611,7 +586,6 @@ const App = {
             document.getElementById('settingApiKey').value = '';
             document.getElementById('settingApiKey').placeholder = data.api_key_masked || 'sk-...';
 
-            // Load workspaces
             const wsResp = await fetch('/api/workspaces');
             const wsData = await wsResp.json();
             const select = document.getElementById('settingWorkspace');
@@ -623,7 +597,6 @@ const App = {
                 if (w === data.workspace) opt.selected = true;
                 select.appendChild(opt);
             });
-            // Update logo subtitle with current workspace
             if (data.workspace) {
                 const shortName = data.workspace.split(/[\\/]/).pop() || data.workspace;
                 const subtitle = document.getElementById('logoSubtitle');
@@ -680,26 +653,6 @@ const App = {
                 this.loadSettings();
             }
         } catch(e) { this.showToast('Error: ' + e.message); }
-    },
-
-    // ── Usage ──────────────────────────────
-
-    updateUsage(usage) {
-        if (!usage) return;
-        const total = usage.total_tokens || 0;
-        document.getElementById('tokenCount').textContent = total.toLocaleString();
-        document.getElementById('usagePrompt').textContent = (usage.prompt_tokens || 0).toLocaleString();
-        document.getElementById('usageCompletion').textContent = (usage.completion_tokens || 0).toLocaleString();
-        document.getElementById('usageTotal').textContent = total.toLocaleString();
-    },
-
-    async pollUsage() {
-        try {
-            const resp = await fetch('/api/usage');
-            const data = await resp.json();
-            if (data.usage) this.updateUsage(data.usage);
-        } catch(e) {}
-        setTimeout(() => this.pollUsage(), 30000);
     },
 
     // ── Toast ──────────────────────────────
