@@ -139,12 +139,13 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
     @app.get("/api/workspaces")
     async def list_workspaces():
         known = set()
+        known.update(session_mgr.list_registered_workspaces())
         known.add(config.session.workspace)
         for w in session_mgr.list_workspaces():
             known.add(w)
         home_ws = str(Path.home() / "SophiaWorkspace")
         known.add(home_ws)
-        return {"workspaces": sorted(known)}
+        return {"workspaces": sorted(known), "current": config.session.workspace}
 
     @app.post("/api/workspaces")
     async def create_workspace(request: Request):
@@ -156,6 +157,7 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
             Path(path).mkdir(parents=True, exist_ok=True)
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
+        session_mgr.register_workspace(path)
         return {"workspace": path, "created": True}
 
     @app.post("/api/workspace/switch")
@@ -169,6 +171,7 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
         config.session.workspace = new_ws
+        session_mgr.register_workspace(new_ws)
         agent.reconfigure(config)
         return {"workspace": new_ws, "switched": True}
 

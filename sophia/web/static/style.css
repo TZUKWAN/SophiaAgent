@@ -279,6 +279,21 @@ body {
     letter-spacing: 0.3px;
 }
 
+.workspace-badge {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--primary);
+    background: var(--bg-hover);
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(79, 110, 247, 0.2);
+    letter-spacing: 0.2px;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* ═══ Messages ════════════════════════════════ */
 
 .messages {

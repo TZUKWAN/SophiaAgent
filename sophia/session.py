@@ -43,6 +43,11 @@ CREATE TABLE IF NOT EXISTS checkpoints (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS workspaces (
+    path TEXT PRIMARY KEY,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id);
 CREATE INDEX IF NOT EXISTS idx_checkpoints_session ON checkpoints(session_id);
 """
@@ -249,9 +254,20 @@ class SessionManager:
 
     # ── Workspaces ────────────────────────────────────────────
 
+    def register_workspace(self, path: str):
+        with self._connect() as conn:
+            conn.execute(
+                "INSERT OR IGNORE INTO workspaces (path) VALUES (?)", (path,)
+            )
+
     def list_workspaces(self) -> List[str]:
         with self._connect() as conn:
             rows = conn.execute(
                 "SELECT DISTINCT workspace FROM sessions WHERE workspace != ''"
             ).fetchall()
         return [r["workspace"] for r in rows]
+
+    def list_registered_workspaces(self) -> List[str]:
+        with self._connect() as conn:
+            rows = conn.execute("SELECT path FROM workspaces ORDER BY created_at").fetchall()
+        return [r["path"] for r in rows]

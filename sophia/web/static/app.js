@@ -17,11 +17,9 @@ const App = {
         this.bindEvents();
         this.connectWebSocket();
 
-        // Restore workspace label in sidebar
+        // Restore workspace display
         if (this.state.currentWorkspace) {
-            const shortName = this.state.currentWorkspace.split(/[\\/]/).pop() || this.state.currentWorkspace;
-            const subtitle = document.getElementById('logoSubtitle');
-            if (subtitle) subtitle.textContent = shortName;
+            this.updateWorkspaceDisplay(this.state.currentWorkspace);
         }
 
         this.loadSessions();
@@ -552,32 +550,36 @@ const App = {
     },
 
     async selectWorkspace(path, hideModal = true) {
-        console.log('[selectWorkspace] clicked:', path);
         try {
             const resp = await fetch('/api/workspace/switch', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({workspace: path}),
             });
-            console.log('[selectWorkspace] resp.ok:', resp.ok, 'status:', resp.status);
             if (!resp.ok) {
                 const err = await resp.json();
                 throw new Error(err.detail || 'Switch failed');
             }
             localStorage.setItem('sophia-workspace', path);
             this.state.currentWorkspace = path;
-            const shortName = path.split(/[\\/]/).pop() || path;
-            const subtitle = document.getElementById('logoSubtitle');
-            if (subtitle) subtitle.textContent = shortName;
+            this.updateWorkspaceDisplay(path);
             if (hideModal) this.hideWorkspaceModal();
             this.resetChatUI();
             this.loadSessions();
-            this.showToast(`Workspace: ${shortName}`);
-            console.log('[selectWorkspace] success:', shortName);
         } catch(e) {
             this.showToast('Error: ' + e.message);
             console.error('Switch workspace failed', e);
         }
+    },
+
+    updateWorkspaceDisplay(path) {
+        const shortName = path.split(/[\\/]/).pop() || path;
+        // Sidebar subtitle
+        const subtitle = document.getElementById('logoSubtitle');
+        if (subtitle) subtitle.textContent = shortName;
+        // Header badge
+        const badge = document.getElementById('workspaceBadge');
+        if (badge) badge.textContent = shortName;
     },
 
     // ── Settings ───────────────────────────
@@ -667,7 +669,7 @@ const App = {
             });
             if (resp.ok) {
                 this.showToast('Workspace added');
-                this.loadSettings();
+                this.loadWorkspacesForModal();
             }
         } catch(e) { this.showToast('Error: ' + e.message); }
     },
