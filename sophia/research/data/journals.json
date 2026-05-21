@@ -1,0 +1,2349 @@
+[
+  {
+    "id": "jiaoyu-yanjiu",
+    "name_cn": "教育研究",
+    "name_en": "Educational Research",
+    "discipline": "教育学",
+    "publisher": "中央教育科学研究所",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "教育基本理论、教育政策、教育经济、教育管理、课程与教学、教师教育、比较教育、教育技术",
+    "keywords": ["教育理论", "教育政策", "课程教学", "教师发展", "教育公平"],
+    "preferred_methods": ["实证研究", "混合方法", "政策分析", "比较研究"],
+    "format_requirements": {
+      "标题": "中文题名一般不超过20个汉字",
+      "摘要": "300-400字，中英文对照",
+      "关键词": "3-8个",
+      "正文": "Word排版，A4纸，小四号宋体",
+      "参考文献": "顺序编码制",
+      "注释": "脚注，每页重新编号"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "研究问题不明确或过于宏大",
+      "缺乏理论框架或理论创新不足",
+      "研究方法描述不清",
+      "数据分析不充分",
+      "与已有研究重复，缺乏新意"
+    ],
+    "writing_tips": [
+      "开篇须明确研究问题和研究意义",
+      "理论框架须清晰，概念界定须严谨",
+      "实证研究须报告样本量、信效度等基本信息",
+      "结论须回应研究问题，避免泛泛而谈"
+    ],
+    "similar_journals": ["北京大学教育评论", "华东师范大学学报(教育科学版)", "全球教育展望"],
+    "submission_contact": "北京市北三环中路46号教育研究编辑部",
+    "online_system": "http://www.nies.net.cn/"
+  },
+  {
+    "id": "beida-jiaoyu",
+    "name_cn": "北京大学教育评论",
+    "name_en": "Peking University Education Review",
+    "discipline": "教育学",
+    "publisher": "北京大学",
+    "frequency": "季刊",
+    "cssci_level": "来源刊",
+    "scope": "教育哲学、教育史、高等教育、教育社会学、教育经济学、教育政策",
+    "keywords": ["高等教育", "教育哲学", "教育史", "教育社会学"],
+    "preferred_methods": ["理论分析", "历史研究", "质性研究", "比较研究"],
+    "format_requirements": {
+      "标题": "简明扼要",
+      "摘要": "中英文摘要各300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版，五号宋体",
+      "参考文献": "APA格式或GB/T 7714"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "理论深度不足",
+      "缺乏学术对话",
+      "论证不够严谨",
+      "过于描述性，缺乏分析"
+    ],
+    "writing_tips": [
+      "强调理论深度和学术对话",
+      "鼓励跨学科视角",
+      "书评类稿件须有问题意识",
+      "重视方法论自觉"
+    ],
+    "similar_journals": ["教育研究", "华东师范大学学报(教育科学版)"],
+    "submission_contact": "北京大学教育学院",
+    "online_system": ""
+  },
+  {
+    "id": "huadong-jiaoyu",
+    "name_cn": "华东师范大学学报(教育科学版)",
+    "name_en": "Journal of East China Normal University (Educational Sciences)",
+    "discipline": "教育学",
+    "publisher": "华东师范大学",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "教育基本理论、教育心理学、课程与教学、教师教育、教育技术、学前教育、特殊教育",
+    "keywords": ["教育心理学", "课程教学", "教师教育", "学前教育"],
+    "preferred_methods": ["实证研究", "实验研究", "量化分析", "质性研究"],
+    "format_requirements": {
+      "摘要": "300字左右，中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "参考文献": "GB/T 7714格式"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "选题陈旧",
+      "研究方法不规范",
+      "统计方法误用",
+      "结论缺乏证据支撑"
+    ],
+    "writing_tips": [
+      "实证研究优先",
+      "统计方法须规范",
+      "鼓励教育实验和准实验研究",
+      "重视研究伦理说明"
+    ],
+    "similar_journals": ["教育研究", "全球教育展望", "教育发展研究"],
+    "submission_contact": "上海市中山北路3663号",
+    "online_system": ""
+  },
+  {
+    "id": "quanqiu-jiaoyu",
+    "name_cn": "全球教育展望",
+    "name_en": "Global Education",
+    "discipline": "教育学",
+    "publisher": "华东师范大学",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "国际教育改革动态、比较教育、课程理论、教学设计、学习科学",
+    "keywords": ["比较教育", "课程改革", "学习科学", "教学设计"],
+    "preferred_methods": ["比较研究", "文献综述", "案例研究"],
+    "format_requirements": {
+      "摘要": "200-300字",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-12000字"},
+    "common_rejection_reasons": [
+      "仅介绍国外经验，缺乏本土视角",
+      "缺乏理论分析框架",
+      "过于描述性"
+    ],
+    "writing_tips": [
+      "强调国际视野与本土关怀的结合",
+      "鼓励比较研究的深度分析",
+      "重视课程与教学理论的原创性"
+    ],
+    "similar_journals": ["比较教育研究", "外国教育研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "jiaoyu-fazhan",
+    "name_cn": "教育发展研究",
+    "name_en": "Research in Educational Development",
+    "discipline": "教育学",
+    "publisher": "上海市教育科学研究院",
+    "frequency": "半月刊",
+    "cssci_level": "来源刊",
+    "scope": "教育发展战略、教育政策、教育管理、教育经济、基础教育、职业教育",
+    "keywords": ["教育政策", "基础教育", "职业教育", "教育管理"],
+    "preferred_methods": ["政策分析", "调查研究", "案例研究"],
+    "format_requirements": {
+      "摘要": "300字以内",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "6000-12000字"},
+    "common_rejection_reasons": [
+      "政策建议缺乏实证支撑",
+      "问题分析不够深入",
+      "对策过于空泛"
+    ],
+    "writing_tips": [
+      "鼓励教育政策研究",
+      "重视实证数据",
+      "关注教育实践问题"
+    ],
+    "similar_journals": ["教育研究", "华东师范大学学报(教育科学版)"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "xinli-xuebao",
+    "name_cn": "心理学报",
+    "name_en": "Acta Psychologica Sinica",
+    "discipline": "心理学",
+    "publisher": "中国心理学会",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "认知心理、发展与教育心理、社会心理、临床与咨询心理、工业与组织心理",
+    "keywords": ["认知心理学", "发展心理学", "社会心理学", "心理健康"],
+    "preferred_methods": ["实验研究", "量化分析", "脑成像", "纵向研究"],
+    "format_requirements": {
+      "标题": "中英文",
+      "摘要": "400字以内，中英文",
+      "关键词": "3-5个，中英文",
+      "正文": "Word排版，宋体小四",
+      "参考文献": "APA格式",
+      "统计": "须报告效应量和置信区间"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "实验设计存在缺陷",
+      "统计方法不当",
+      "样本量不足",
+      "缺乏理论贡献",
+      "与已有研究重复"
+    ],
+    "writing_tips": [
+      "实验设计须严谨，变量控制须清晰",
+      "统计报告须完整，须报告效应量",
+      "鼓励预注册研究",
+      "重视开放科学实践"
+    ],
+    "similar_journals": ["心理科学进展", "心理科学", "心理学探新"],
+    "submission_contact": "中国科学院心理研究所",
+    "online_system": "http://journal.psych.ac.cn/"
+  },
+  {
+    "id": "xinli-jinzhan",
+    "name_cn": "心理科学进展",
+    "name_en": "Advances in Psychological Science",
+    "discipline": "心理学",
+    "publisher": "中国科学院心理研究所",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "心理学各领域的前沿综述、元分析、研究进展报告",
+    "keywords": ["综述", "元分析", "研究前沿", "理论进展"],
+    "preferred_methods": ["元分析", "系统综述", "文献计量"],
+    "format_requirements": {
+      "摘要": "中英文摘要",
+      "关键词": "3-8个",
+      "正文": "Word排版",
+      "参考文献": "APA格式"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "综述不够全面",
+      "缺乏批判性分析",
+      "结构松散"
+    ],
+    "writing_tips": [
+      "综述须覆盖该领域主要研究",
+      "须提出未来研究方向",
+      "鼓励元分析方法"
+    ],
+    "similar_journals": ["心理学报", "心理科学"],
+    "submission_contact": "",
+    "online_system": "http://journal.psych.ac.cn/"
+  },
+  {
+    "id": "xinli-kexue",
+    "name_cn": "心理科学",
+    "name_en": "Psychological Science",
+    "discipline": "心理学",
+    "publisher": "中国心理学会",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "基础与应用心理学研究",
+    "keywords": ["实验心理学", "应用心理学", "心理健康"],
+    "preferred_methods": ["实验研究", "问卷调查", "量化分析"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "6000-12000字"},
+    "common_rejection_reasons": [
+      "方法描述不清",
+      "统计报告不完整",
+      "创新性不足"
+    ],
+    "writing_tips": [
+      "强调方法的严谨性",
+      "鼓励应用导向的研究"
+    ],
+    "similar_journals": ["心理学报", "心理科学进展"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "shehuixue-yanjiu",
+    "name_cn": "社会学研究",
+    "name_en": "Sociological Studies",
+    "discipline": "社会学",
+    "publisher": "中国社会科学院社会学研究所",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "社会学理论、社会分层与流动、城乡社会学、家庭社会学、组织社会学、经济社会学、文化社会学、社会政策",
+    "keywords": ["社会分层", "城乡研究", "家庭社会学", "社会政策", "质性研究"],
+    "preferred_methods": ["质性研究", "田野调查", "民族志", "混合方法", "量化分析"],
+    "format_requirements": {
+      "标题": "简洁明了",
+      "摘要": "400字以内",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "注释": "脚注",
+      "参考文献": "作者-年份制"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "理论对话不足",
+      "经验材料与理论分析脱节",
+      "研究方法交代不清",
+      "缺乏社会学想象力"
+    ],
+    "writing_tips": [
+      "重视理论对话，须明确与哪些理论传统对话",
+      "质性研究须充分交代田野过程和方法论反思",
+      "鼓励将本土经验上升到理论层面",
+      "关注中国社会转型中的重大问题"
+    ],
+    "similar_journals": ["社会", "青年研究", "开放时代"],
+    "submission_contact": "北京市建国门内大街5号",
+    "online_system": "http://shxyj.org/"
+  },
+  {
+    "id": "shehui-zazhi",
+    "name_cn": "社会",
+    "name_en": "Chinese Journal of Sociology",
+    "discipline": "社会学",
+    "publisher": "上海大学",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "社会学理论、社会研究方法、城乡社会学、组织社会学、文化社会学、历史社会学",
+    "keywords": ["社会学理论", "历史社会学", "城乡社会学", "研究方法"],
+    "preferred_methods": ["理论分析", "历史比较", "质性研究", "量化研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "理论创新性不足",
+      "问题意识不强",
+      "经验材料薄弱"
+    ],
+    "writing_tips": [
+      "鼓励理论创新",
+      "重视历史社会学视角",
+      "鼓励跨学科对话"
+    ],
+    "similar_journals": ["社会学研究", "开放时代"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "kaifang-shidai",
+    "name_cn": "开放时代",
+    "name_en": "Open Times",
+    "discipline": "社会学",
+    "publisher": "广州市社会科学院",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "社会科学前沿理论、中国研究、区域研究、城乡研究、文化研究",
+    "keywords": ["中国研究", "城乡关系", "文化研究", "社会科学理论"],
+    "preferred_methods": ["田野调查", "历史研究", "理论分析", "跨学科研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "问题意识不强",
+      "过于描述性",
+      "理论深度不够"
+    ],
+    "writing_tips": [
+      "鼓励具有中国问题意识的原创研究",
+      "重视田野材料的理论提升",
+      "欢迎跨学科视角"
+    ],
+    "similar_journals": ["社会学研究", "社会"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "qingnian-yanjiu",
+    "name_cn": "青年研究",
+    "name_en": "Youth Studies",
+    "discipline": "社会学",
+    "publisher": "中国社会科学院社会学研究所",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "青年社会学、青年文化、青年政策、青年心理、青年教育",
+    "keywords": ["青年", "青年文化", "青年政策", "青年社会学"],
+    "preferred_methods": ["调查研究", "质性研究", "混合方法"],
+    "format_requirements": {
+      "摘要": "300字以内",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "仅描述青年现象，缺乏社会学分析",
+      "理论框架不清晰"
+    ],
+    "writing_tips": [
+      "强调社会学视角",
+      "鼓励实证研究"
+    ],
+    "similar_journals": ["社会学研究", "社会"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "jingji-yanjiu",
+    "name_cn": "经济研究",
+    "name_en": "Economic Research Journal",
+    "discipline": "经济学",
+    "publisher": "中国社会科学院经济研究所",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "宏观经济、微观经济、产业经济、区域经济、国际经济、金融、劳动经济、公共经济",
+    "keywords": ["宏观经济学", "微观经济学", "产业经济", "金融学", "劳动经济"],
+    "preferred_methods": ["计量经济学", "理论模型", "实证分析", "博弈论"],
+    "format_requirements": {
+      "标题": "中英文",
+      "摘要": "中英文摘要各500字以内",
+      "关键词": "3-5个，中英文",
+      "正文": "Word排版",
+      "参考文献": "顺序编码制",
+      "数学": "公式须编号"
+    },
+    "word_count_limit": {"正文": "15000-25000字"},
+    "common_rejection_reasons": [
+      "模型设定不合理",
+      "内生性处理不当",
+      "数据质量不高",
+      "结论缺乏稳健性检验",
+      "政策建议缺乏针对性"
+    ],
+    "writing_tips": [
+      "模型须严谨，识别策略须清晰",
+      "须报告稳健性检验结果",
+      "数据说明须详细",
+      "鼓励使用微观数据"
+    ],
+    "similar_journals": ["管理世界", "世界经济", "中国工业经济"],
+    "submission_contact": "北京市西城区月坛北小街2号",
+    "online_system": "http://www.erj.cn/"
+  },
+  {
+    "id": "guanli-shijie",
+    "name_cn": "管理世界",
+    "name_en": "Management World",
+    "discipline": "管理学",
+    "publisher": "国务院发展研究中心",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "企业管理、公共管理、创新管理、战略管理、人力资源管理、财务管理、组织行为",
+    "keywords": ["企业管理", "战略管理", "创新管理", "组织行为", "公共管理"],
+    "preferred_methods": ["实证研究", "案例研究", "计量分析", "田野实验"],
+    "format_requirements": {
+      "标题": "中英文",
+      "摘要": "中英文摘要",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "参考文献": "作者-年份制"
+    },
+    "word_count_limit": {"正文": "15000-25000字"},
+    "common_rejection_reasons": [
+      "管理实践意义不强",
+      "理论贡献不清晰",
+      "研究方法存在缺陷",
+      "数据可靠性存疑"
+    ],
+    "writing_tips": [
+      "强调管理实践价值",
+      "理论贡献须明确",
+      "鼓励中国企业情境研究",
+      "重视方法创新"
+    ],
+    "similar_journals": ["经济研究", "中国工业经济", "南开管理评论"],
+    "submission_contact": "",
+    "online_system": "http://www.mwm.net.cn/"
+  },
+  {
+    "id": "nankai-guanli",
+    "name_cn": "南开管理评论",
+    "name_en": "Nankai Business Review",
+    "discipline": "管理学",
+    "publisher": "南开大学商学院",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "战略管理、组织行为、营销管理、创新管理、人力资源管理、公司治理",
+    "keywords": ["战略管理", "组织行为", "营销", "公司治理"],
+    "preferred_methods": ["实证研究", "案例研究", "实验研究"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "12000-20000字"},
+    "common_rejection_reasons": [
+      "理论框架薄弱",
+      "假设推导不严谨",
+      "研究方法不规范"
+    ],
+    "writing_tips": [
+      "鼓励理论创新",
+      "重视中国情境",
+      "方法须严谨规范"
+    ],
+    "similar_journals": ["管理世界", "中国工业经济"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "zhongguo-gongye",
+    "name_cn": "中国工业经济",
+    "name_en": "China Industrial Economics",
+    "discipline": "经济学",
+    "publisher": "中国社会科学院工业经济研究所",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "产业经济、企业经济、区域经济、国际贸易、数字经济、产业政策",
+    "keywords": ["产业经济", "企业经济", "数字经济", "产业政策"],
+    "preferred_methods": ["计量经济学", "实证分析", "政策评估"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "15000-25000字"},
+    "common_rejection_reasons": [
+      "政策建议空泛",
+      "理论分析不够深入",
+      "数据问题"
+    ],
+    "writing_tips": [
+      "鼓励产业政策和实践研究",
+      "重视政策评估方法"
+    ],
+    "similar_journals": ["经济研究", "管理世界"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "shijie-jingji",
+    "name_cn": "世界经济",
+    "name_en": "The Journal of World Economy",
+    "discipline": "经济学",
+    "publisher": "中国社会科学院世界经济与政治研究所",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "国际金融、国际贸易、全球经济治理、国际投资、汇率、宏观经济政策",
+    "keywords": ["国际金融", "国际贸易", "全球经济", "汇率"],
+    "preferred_methods": ["计量经济学", "理论模型", "实证分析"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "12000-20000字"},
+    "common_rejection_reasons": [
+      "问题不够聚焦",
+      "模型设定问题",
+      "政策建议不具体"
+    ],
+    "writing_tips": [
+      "关注全球经济重大问题",
+      "鼓励中国视角的国际经济研究"
+    ],
+    "similar_journals": ["经济研究", "中国工业经济"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "zhengzhixue-yanjiu",
+    "name_cn": "政治学研究",
+    "name_en": "CASS Journal of Political Science",
+    "discipline": "政治学",
+    "publisher": "中国社会科学院政治学研究所",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "政治学理论、中国政治、比较政治、公共政策、国际政治、政治哲学、行政学",
+    "keywords": ["政治学理论", "中国政治", "比较政治", "公共政策", "国际政治"],
+    "preferred_methods": ["理论分析", "比较研究", "案例研究", "量化分析"],
+    "format_requirements": {
+      "摘要": "400字以内",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "注释": "脚注"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "理论对话不足",
+      "政治分析缺乏深度",
+      "规范性论证不够严谨"
+    ],
+    "writing_tips": [
+      "重视政治学理论传统",
+      "鼓励比较政治研究",
+      "关注中国政治实践"
+    ],
+    "similar_journals": ["公共行政评论", "国际政治研究", "探索与争鸣"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "guoji-zhengzhi",
+    "name_cn": "国际政治研究",
+    "name_en": "International Politics Quarterly",
+    "discipline": "政治学",
+    "publisher": "北京大学",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "国际关系理论、国际安全、全球治理、区域研究、外交政策、国际政治经济学",
+    "keywords": ["国际关系", "国际安全", "全球治理", "外交政策"],
+    "preferred_methods": ["理论分析", "案例研究", "比较分析", "定量分析"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "理论框架不清晰",
+      "经验分析薄弱",
+      "过于描述性"
+    ],
+    "writing_tips": [
+      "强调理论对话",
+      "鼓励区域国别深度研究",
+      "重视中国外交视角"
+    ],
+    "similar_journals": ["政治学研究", "世界经济与政治"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "shijie-jingji-zhengzhi",
+    "name_cn": "世界经济与政治",
+    "name_en": "World Economics and Politics",
+    "discipline": "政治学",
+    "publisher": "中国社会科学院世界经济与政治研究所",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "国际关系、国际政治经济学、全球治理、外交、国际安全",
+    "keywords": ["国际关系", "全球治理", "外交", "国际安全"],
+    "preferred_methods": ["理论分析", "案例研究", "定量分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "理论创新不足",
+      "问题意识不强"
+    ],
+    "writing_tips": [
+      "鼓励IPE研究",
+      "重视全球治理议题"
+    ],
+    "similar_journals": ["国际政治研究", "政治学研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "gonggong-xingzheng",
+    "name_cn": "公共行政评论",
+    "name_en": "Journal of Public Administration",
+    "discipline": "政治学",
+    "publisher": "中山大学",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "公共管理、行政改革、政府治理、公共政策、绩效管理、电子政务",
+    "keywords": ["公共管理", "政府治理", "公共政策", "行政改革"],
+    "preferred_methods": ["实证研究", "案例研究", "比较研究", "量化分析"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "理论贡献不清晰",
+      "中国情境不突出",
+      "方法不规范"
+    ],
+    "writing_tips": [
+      "鼓励中国公共管理研究",
+      "重视理论建构",
+      "方法须规范"
+    ],
+    "similar_journals": ["政治学研究", "中国行政管理"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "faxue-yanjiu",
+    "name_cn": "法学研究",
+    "name_en": "Chinese Journal of Law",
+    "discipline": "法学",
+    "publisher": "中国社会科学院法学研究所",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "法理学、宪法学、行政法学、民商法学、刑法学、经济法学、国际法学、法律史",
+    "keywords": ["法理学", "民法", "刑法", "宪法", "行政法"],
+    "preferred_methods": ["规范分析", "比较法", "案例研究", "实证法学"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "注释": "脚注，每页重新编号"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "问题意识不强",
+      "论证不够深入",
+      "缺乏学术对话",
+      "过于实务导向"
+    ],
+    "writing_tips": [
+      "重视法教义学分析",
+      "鼓励比较法视角",
+      "实证法学须方法规范",
+      "关注中国法治实践"
+    ],
+    "similar_journals": ["中国法学", "中外法学", "法制与社会发展"],
+    "submission_contact": "北京市东城区沙滩北街15号",
+    "online_system": ""
+  },
+  {
+    "id": "zhongguo-faxue",
+    "name_cn": "中国法学",
+    "name_en": "China Legal Science",
+    "discipline": "法学",
+    "publisher": "中国法学会",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "法学各学科的理论与实践问题",
+    "keywords": ["法学理论", "法治建设", "法律制度"],
+    "preferred_methods": ["规范分析", "比较法", "实证研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "12000-20000字"},
+    "common_rejection_reasons": [
+      "理论深度不够",
+      "过于实务",
+      "创新性不足"
+    ],
+    "writing_tips": [
+      "强调理论贡献",
+      "关注中国法治问题"
+    ],
+    "similar_journals": ["法学研究", "中外法学"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "zhongwai-faxue",
+    "name_cn": "中外法学",
+    "name_en": "Peking University Law Journal",
+    "discipline": "法学",
+    "publisher": "北京大学",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "法学理论、比较法、民商法、宪法行政法、刑法、国际法",
+    "keywords": ["比较法", "法学理论", "民商法", "宪法"],
+    "preferred_methods": ["比较法", "规范分析", "案例研究", "实证分析"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "比较法研究缺乏深度",
+      "论证不够严谨"
+    ],
+    "writing_tips": [
+      "鼓励比较法研究",
+      "重视理论深度"
+    ],
+    "similar_journals": ["法学研究", "中国法学"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "xinwen-yu-chuanbo",
+    "name_cn": "新闻与传播研究",
+    "name_en": "Journalism & Communication",
+    "discipline": "新闻学与传播学",
+    "publisher": "中国社会科学院新闻与传播研究所",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "新闻理论、传播理论、新媒体研究、媒介文化、广告与公关、国际传播、舆论研究",
+    "keywords": ["传播理论", "新媒体", "舆论", "媒介文化", "国际传播"],
+    "preferred_methods": ["内容分析", "问卷调查", "田野调查", "话语分析", "网络民族志"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "参考文献": "GB/T 7714"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "理论框架不清晰",
+      "经验研究不够深入",
+      "过于描述现象",
+      "缺乏传播学理论视角"
+    ],
+    "writing_tips": [
+      "须体现传播学学科视角",
+      "新媒体研究须方法创新",
+      "鼓励批判传播学研究",
+      "重视中国传播实践"
+    ],
+    "similar_journals": ["国际新闻界", "现代传播", "新闻大学"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "guoji-xinwen",
+    "name_cn": "国际新闻界",
+    "name_en": "Chinese Journal of Journalism & Communication",
+    "discipline": "新闻学与传播学",
+    "publisher": "中国人民大学",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "新闻传播理论、新媒体、媒介与社会、全球传播、传媒经济",
+    "keywords": ["新闻传播", "新媒体", "媒介研究", "全球传播"],
+    "preferred_methods": ["内容分析", "问卷调查", "大数据方法", "网络分析"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "理论贡献不足",
+      "方法不够严谨",
+      "过于描述性"
+    ],
+    "writing_tips": [
+      "鼓励方法创新",
+      "重视理论建构",
+      "关注前沿议题"
+    ],
+    "similar_journals": ["新闻与传播研究", "现代传播"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "xiandai-chuanbo",
+    "name_cn": "现代传播",
+    "name_en": "Modern Communication",
+    "discipline": "新闻学与传播学",
+    "publisher": "中国传媒大学",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "影视艺术、传媒经济、新媒体传播、广告传播、国际传播、文化产业",
+    "keywords": ["影视艺术", "传媒经济", "新媒体", "文化产业"],
+    "preferred_methods": ["内容分析", "案例研究", "产业分析", "文化研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "过于实务",
+      "理论深度不够",
+      "缺乏学术规范"
+    ],
+    "writing_tips": [
+      "鼓励艺术与传播交叉研究",
+      "重视产业分析的理论化"
+    ],
+    "similar_journals": ["新闻与传播研究", "国际新闻界"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "xinwen-daxue",
+    "name_cn": "新闻大学",
+    "name_en": "Journalism Quarterly",
+    "discipline": "新闻学与传播学",
+    "publisher": "复旦大学",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "新闻理论、传播理论、广播电视、新媒体、广告、传媒管理",
+    "keywords": ["新闻理论", "广播电视", "新媒体", "广告"],
+    "preferred_methods": ["内容分析", "调查法", "实验法"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "理论框架薄弱",
+      "过于实务"
+    ],
+    "writing_tips": [
+      "强调理论贡献",
+      "鼓励实证研究"
+    ],
+    "similar_journals": ["新闻与传播研究", "现代传播"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "tushuguan-xuebao",
+    "name_cn": "中国图书馆学报",
+    "name_en": "Journal of Library Science in China",
+    "discipline": "图书馆、情报与文献学",
+    "publisher": "中国图书馆学会",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "图书馆学理论、情报学、档案学、数字图书馆、知识组织、信息检索",
+    "keywords": ["图书馆学", "情报学", "数字图书馆", "知识组织"],
+    "preferred_methods": ["文献计量", "实证研究", "系统设计", "案例分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "缺乏理论创新",
+      "技术描述过多",
+      "问题意识不强"
+    ],
+    "writing_tips": [
+      "鼓励理论与技术结合",
+      "重视图情学科特色"
+    ],
+    "similar_journals": ["情报学报", "大学图书馆学报"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "qingbao-xuebao",
+    "name_cn": "情报学报",
+    "name_en": "Journal of the China Society for Scientific and Technical Information",
+    "discipline": "图书馆、情报与文献学",
+    "publisher": "中国科学技术情报学会",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "情报学理论、信息检索、知识管理、科学计量、竞争情报、数据挖掘",
+    "keywords": ["情报学", "信息检索", "科学计量", "知识管理"],
+    "preferred_methods": ["文献计量", "数据挖掘", "实验评估", "模型构建"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "创新性不足",
+      "实验设计问题"
+    ],
+    "writing_tips": [
+      "鼓励方法创新",
+      "重视实验验证"
+    ],
+    "similar_journals": ["中国图书馆学报", "现代图书情报技术"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "wenxue-pinglun",
+    "name_cn": "文学评论",
+    "name_en": "Literary Review",
+    "discipline": "中国文学",
+    "publisher": "中国社会科学院文学研究所",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "中国古代文学、中国现当代文学、文艺理论、比较文学、民间文学",
+    "keywords": ["古代文学", "现当代文学", "文艺理论", "比较文学"],
+    "preferred_methods": ["文本细读", "理论分析", "历史考证", "比较研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "注释": "脚注"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "文本分析不够深入",
+      "理论套用生硬",
+      "缺乏问题意识",
+      "过于主观臆断"
+    ],
+    "writing_tips": [
+      "重视文本细读的基础作用",
+      "理论运用须有机融合",
+      "鼓励文史互证",
+      "关注文学与时代的关系"
+    ],
+    "similar_journals": ["文艺研究", "中国现代文学研究丛刊", "文学遗产"],
+    "submission_contact": "北京市建国门内大街5号",
+    "online_system": ""
+  },
+  {
+    "id": "wenyi-yanjiu",
+    "name_cn": "文艺研究",
+    "name_en": "Literature and Art Studies",
+    "discipline": "中国文学",
+    "publisher": "中国艺术研究院",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "文学理论、艺术理论、美学、文化研究、影视艺术、美术、音乐、戏剧",
+    "keywords": ["文艺理论", "美学", "艺术研究", "文化研究"],
+    "preferred_methods": ["理论分析", "美学分析", "文化研究", "历史研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "理论创新不足",
+      "分析不够深入",
+      "过于泛泛"
+    ],
+    "writing_tips": [
+      "鼓励跨艺术门类研究",
+      "重视理论深度",
+      "关注当代艺术现象"
+    ],
+    "similar_journals": ["文学评论", "文艺理论研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "wenxue-yichan",
+    "name_cn": "文学遗产",
+    "name_en": "Literary Heritage",
+    "discipline": "中国文学",
+    "publisher": "中国社会科学院文学研究所",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "中国古代文学、古典文献学、文学史、文学批评史",
+    "keywords": ["古代文学", "古典文献", "文学史", "文学批评"],
+    "preferred_methods": ["文献考证", "文本分析", "历史研究", "比较研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "注释": "脚注，详细引证"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "考证不够严谨",
+      "观点缺乏新意",
+      "文献基础薄弱"
+    ],
+    "writing_tips": [
+      "重视文献考证的严谨性",
+      "鼓励新材料的发现与运用",
+      "关注文学史重大问题的再探讨"
+    ],
+    "similar_journals": ["文学评论", "文史"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "lishi-yanjiu",
+    "name_cn": "历史研究",
+    "name_en": "Historical Research",
+    "discipline": "历史学",
+    "publisher": "中国社会科学院历史研究所",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "中国古代史、中国近现代史、世界史、史学理论、历史地理、考古学",
+    "keywords": ["中国古代史", "近现代史", "世界史", "史学理论"],
+    "preferred_methods": ["史料考证", "历史分析", "比较历史", "计量史学"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "注释": "脚注，详细引证原始史料"
+    },
+    "word_count_limit": {"正文": "15000-25000字"},
+    "common_rejection_reasons": [
+      "史料运用不当",
+      "论证逻辑不严密",
+      "缺乏学术史回顾",
+      "观点缺乏新意"
+    ],
+    "writing_tips": [
+      "史料引用须注明原始出处",
+      "重视学术史梳理",
+      "鼓励新史料的发掘与运用",
+      "论证须严谨，避免过度推断"
+    ],
+    "similar_journals": ["近代史研究", "中国史研究", "世界历史"],
+    "submission_contact": "北京市建国门内大街5号",
+    "online_system": ""
+  },
+  {
+    "id": "jindaishi-yanjiu",
+    "name_cn": "近代史研究",
+    "name_en": "Modern Chinese History Studies",
+    "discipline": "历史学",
+    "publisher": "中国社会科学院近代史研究所",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "中国近代史、中华民国史、晚清史、抗日战争史、近代社会文化史",
+    "keywords": ["近代史", "晚清", "民国", "社会文化史"],
+    "preferred_methods": ["史料考证", "社会史", "文化史", "计量史学"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "注释": "脚注"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "史料薄弱",
+      "观点陈旧",
+      "缺乏新视角"
+    ],
+    "writing_tips": [
+      "鼓励新史料运用",
+      "重视社会史视角",
+      "关注近代中国重大转型"
+    ],
+    "similar_journals": ["历史研究", "中国近代史"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "zhongguoshi-yanjiu",
+    "name_cn": "中国史研究",
+    "name_en": "Journal of Chinese Historical Studies",
+    "discipline": "历史学",
+    "publisher": "中国社会科学院历史研究所",
+    "frequency": "季刊",
+    "cssci_level": "来源刊",
+    "scope": "中国古代史各断代研究",
+    "keywords": ["古代史", "断代史", "先秦", "秦汉", "唐宋", "明清"],
+    "preferred_methods": ["史料考证", "历史分析", "文献学"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "注释": "脚注"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "史料基础不扎实",
+      "问题不够聚焦"
+    ],
+    "writing_tips": [
+      "重视史料基本功",
+      "鼓励断代史深度研究"
+    ],
+    "similar_journals": ["历史研究", "文学遗产"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "zhexue-yanjiu",
+    "name_cn": "哲学研究",
+    "name_en": "Philosophical Research",
+    "discipline": "哲学",
+    "publisher": "中国社会科学院哲学研究所",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "马克思主义哲学、中国哲学、西方哲学、逻辑学、伦理学、美学、科技哲学、宗教学",
+    "keywords": ["中国哲学", "西方哲学", "马克思主义哲学", "伦理学", "美学"],
+    "preferred_methods": ["概念分析", "文本诠释", "比较哲学", "逻辑分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "注释": "脚注"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "论证不够严密",
+      "概念界定不清",
+      "缺乏哲学史背景",
+      "过于空泛"
+    ],
+    "writing_tips": [
+      "概念界定须清晰",
+      "论证须逻辑严密",
+      "重视哲学史脉络",
+      "鼓励中西哲学对话"
+    ],
+    "similar_journals": ["哲学动态", "世界哲学", "中国哲学史"],
+    "submission_contact": "北京市建国门内大街5号",
+    "online_system": ""
+  },
+  {
+    "id": "zhexue-dongtai",
+    "name_cn": "哲学动态",
+    "name_en": "Philosophical Trends",
+    "discipline": "哲学",
+    "publisher": "中国社会科学院哲学研究所",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "哲学各学科前沿动态、新书评介、学术会议综述",
+    "keywords": ["哲学前沿", "学术动态", "书评"],
+    "preferred_methods": ["综述", "书评", "理论分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "6000-12000字"},
+    "common_rejection_reasons": [
+      "过于介绍性",
+      "缺乏批判分析"
+    ],
+    "writing_tips": [
+      "鼓励批判性综述",
+      "重视前沿追踪"
+    ],
+    "similar_journals": ["哲学研究", "世界哲学"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "shijie-zhexue",
+    "name_cn": "世界哲学",
+    "name_en": "World Philosophy",
+    "discipline": "哲学",
+    "publisher": "中国社会科学院哲学研究所",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "西方哲学、东方哲学、比较哲学、当代哲学思潮",
+    "keywords": ["西方哲学", "比较哲学", "当代哲学"],
+    "preferred_methods": ["文本诠释", "比较分析", "逻辑分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "翻译或诠释不准确",
+      "缺乏原创分析"
+    ],
+    "writing_tips": [
+      "重视文本准确性",
+      "鼓励原创诠释"
+    ],
+    "similar_journals": ["哲学研究", "哲学动态"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "minzu-yanjiu",
+    "name_cn": "民族研究",
+    "name_en": "Ethno-National Studies",
+    "discipline": "民族学与文化学",
+    "publisher": "中国社会科学院民族学与人类学研究所",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "民族学、人类学、民族理论、民族政策、民族文化、民族地区发展",
+    "keywords": ["民族学", "人类学", "民族文化", "民族地区", "田野调查"],
+    "preferred_methods": ["田野调查", "民族志", "参与观察", "深度访谈"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "注释": "脚注"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "田野材料薄弱",
+      "理论对话不足",
+      "民族志写作不规范"
+    ],
+    "writing_tips": [
+      "重视田野工作的深度",
+      "鼓励民族志写作的规范性",
+      "关注当代民族问题"
+    ],
+    "similar_journals": ["中央民族大学学报", "广西民族大学学报"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "yuyan-wenzi",
+    "name_cn": "中国语文",
+    "name_en": "Studies of the Chinese Language",
+    "discipline": "语言学",
+    "publisher": "中国社会科学院语言研究所",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "汉语语言学、方言学、历史语言学、语音学、词汇学、语法学、修辞学",
+    "keywords": ["汉语", "方言", "语法", "词汇", "语音"],
+    "preferred_methods": ["语料分析", "田野调查", "实验语音", "历史比较"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "注释": "脚注"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "语料不够充分",
+      "分析不够深入",
+      "缺乏理论框架"
+    ],
+    "writing_tips": [
+      "重视语料的真实性和充分性",
+      "鼓励方言调查研究",
+      "关注汉语史重大问题"
+    ],
+    "similar_journals": ["方言", "语言教学与研究", "世界汉语教学"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "fangyan",
+    "name_cn": "方言",
+    "name_en": "Dialect",
+    "discipline": "语言学",
+    "publisher": "中国社会科学院语言研究所",
+    "frequency": "季刊",
+    "cssci_level": "来源刊",
+    "scope": "汉语方言调查、方言比较、方言语音、方言词汇、方言语法",
+    "keywords": ["方言", "方言调查", "语音", "词汇"],
+    "preferred_methods": ["田野调查", "语音实验", "比较分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "调查材料不够系统",
+      "音标使用不规范"
+    ],
+    "writing_tips": [
+      "重视田野调查的系统性",
+      "音标须规范",
+      "鼓励方言比较研究"
+    ],
+    "similar_journals": ["中国语文", "语言研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "tiyu-kexue",
+    "name_cn": "体育科学",
+    "name_en": "China Sport Science",
+    "discipline": "体育学",
+    "publisher": "中国体育科学学会",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "运动人体科学、体育人文社会学、运动训练学、民族传统体育、学校体育",
+    "keywords": ["运动科学", "体育社会学", "运动训练", "学校体育"],
+    "preferred_methods": ["实验研究", "量化分析", "问卷调查", "文献计量"],
+    "format_requirements": {
+      "摘要": "中英文，400字以内",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "实验设计缺陷",
+      "统计方法不当",
+      "理论深度不够"
+    ],
+    "writing_tips": [
+      "鼓励实证研究",
+      "重视实验规范性",
+      "统计方法须严谨"
+    ],
+    "similar_journals": ["北京体育大学学报", "上海体育学院学报"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "tongji-yanjiu",
+    "name_cn": "统计研究",
+    "name_en": "Statistical Research",
+    "discipline": "统计学",
+    "publisher": "中国统计学会",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "统计理论、统计方法、经济统计、社会统计、数据科学、大数据分析",
+    "keywords": ["统计理论", "统计方法", "经济统计", "数据科学"],
+    "preferred_methods": ["数理统计", "计量经济学", "数据挖掘", "模拟分析"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "方法创新性不足",
+      "实证应用不够深入"
+    ],
+    "writing_tips": [
+      "强调方法创新",
+      "重视实际应用"
+    ],
+    "similar_journals": ["数理统计与管理", "统计与信息论坛"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "dili-xuebao",
+    "name_cn": "地理学报",
+    "name_en": "Acta Geographica Sinica",
+    "discipline": "人文、经济地理",
+    "publisher": "中国地理学会",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "自然地理、人文地理、经济地理、城市地理、旅游地理、地理信息科学",
+    "keywords": ["人文地理", "经济地理", "城市地理", "GIS"],
+    "preferred_methods": ["空间分析", "GIS", "遥感", "计量分析"],
+    "format_requirements": {
+      "摘要": "中英文，500字以内",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "数据问题",
+      "方法不够创新"
+    ],
+    "writing_tips": [
+      "鼓励GIS与空间分析",
+      "重视数据质量"
+    ],
+    "similar_journals": ["地理研究", "经济地理"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "huanjing-kexue",
+    "name_cn": "中国环境科学",
+    "name_en": "China Environmental Science",
+    "discipline": "环境科学",
+    "publisher": "中国环境科学学会",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "环境科学理论、环境政策、环境经济、环境管理、污染控制、生态修复",
+    "keywords": ["环境政策", "环境经济", "污染控制", "生态修复"],
+    "preferred_methods": ["实验研究", "模型模拟", "政策分析", "经济评估"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "数据可靠性问题",
+      "创新性不足"
+    ],
+    "writing_tips": [
+      "鼓励跨学科研究",
+      "重视政策应用价值"
+    ],
+    "similar_journals": ["环境科学学报", "中国人口·资源与环境"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "zonghe-sheke",
+    "name_cn": "中国社会科学",
+    "name_en": "Social Sciences in China",
+    "discipline": "综合社科",
+    "publisher": "中国社会科学院",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "人文社会科学各学科重大理论和现实问题",
+    "keywords": ["社会科学", "重大理论", "现实问题"],
+    "preferred_methods": ["理论分析", "实证研究", "跨学科研究"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "15000-25000字"},
+    "common_rejection_reasons": [
+      "问题不够重大",
+      "理论创新不足",
+      "论证不够深入"
+    ],
+    "writing_tips": [
+      "关注重大理论和现实问题",
+      "强调理论原创性",
+      "鼓励跨学科对话"
+    ],
+    "similar_journals": ["学术月刊", "社会科学战线"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "xueshu-yuekan",
+    "name_cn": "学术月刊",
+    "name_en": "Academic Monthly",
+    "discipline": "综合社科",
+    "publisher": "上海市社会科学界联合会",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "哲学、经济学、文学、历史学、政治学、社会学、法学等各学科研究",
+    "keywords": ["学术前沿", "跨学科", "理论创新"],
+    "preferred_methods": ["理论分析", "实证研究", "跨学科研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "问题不够聚焦",
+      "创新性不足"
+    ],
+    "writing_tips": [
+      "鼓励跨学科研究",
+      "关注学术前沿"
+    ],
+    "similar_journals": ["中国社会科学", "社会科学战线"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "tanjiu-zhengming",
+    "name_cn": "探索与争鸣",
+    "name_en": "Exploration and Free Views",
+    "discipline": "综合社科",
+    "publisher": "上海市社会科学界联合会",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "社会科学前沿问题、思想争鸣、学术批评、跨学科对话",
+    "keywords": ["学术争鸣", "思想前沿", "跨学科", "学术批评"],
+    "preferred_methods": ["理论分析", "思想评论", "学术批评"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "观点不够鲜明",
+      "缺乏学术深度",
+      "过于情绪化"
+    ],
+    "writing_tips": [
+      "鼓励思想争鸣",
+      "观点须鲜明有力",
+      "重视学术规范"
+    ],
+    "similar_journals": ["学术月刊", "读书"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "shehui-kexue-zhanxian",
+    "name_cn": "社会科学战线",
+    "name_en": "Social Science Front",
+    "discipline": "综合社科",
+    "publisher": "吉林省社会科学院",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "哲学、经济学、法学、社会学、历史学、文学、教育学等各学科",
+    "keywords": ["社会科学", "学术研究", "理论创新"],
+    "preferred_methods": ["理论研究", "实证研究", "跨学科"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "问题不够明确",
+      "理论深度不够"
+    ],
+    "writing_tips": [
+      "鼓励多学科研究",
+      "关注东北振兴等区域问题"
+    ],
+    "similar_journals": ["中国社会科学", "学术月刊"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "gaoxiao-xuebao",
+    "name_cn": "北京大学学报(哲学社会科学版)",
+    "name_en": "Journal of Peking University (Philosophy and Social Sciences)",
+    "discipline": "高校学报",
+    "publisher": "北京大学",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "人文社会科学各学科",
+    "keywords": ["人文社科", "学术前沿", "理论研究"],
+    "preferred_methods": ["理论研究", "实证研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "创新性不足",
+      "过于综述性"
+    ],
+    "writing_tips": [
+      "强调学术规范性",
+      "鼓励前沿研究"
+    ],
+    "similar_journals": ["中国人民大学学报", "复旦学报"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "renda-xuebao",
+    "name_cn": "中国人民大学学报",
+    "name_en": "Journal of Renmin University of China",
+    "discipline": "高校学报",
+    "publisher": "中国人民大学",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "人文社会科学各学科",
+    "keywords": ["人文社科", "学术前沿"],
+    "preferred_methods": ["理论研究", "实证研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "创新性不足",
+      "论证不够深入"
+    ],
+    "writing_tips": [
+      "鼓励重大理论问题研究",
+      "重视中国问题"
+    ],
+    "similar_journals": ["北京大学学报", "复旦学报"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "fudan-xuebao",
+    "name_cn": "复旦学报(社会科学版)",
+    "name_en": "Fudan Journal (Social Sciences Edition)",
+    "discipline": "高校学报",
+    "publisher": "复旦大学",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "人文社会科学各学科",
+    "keywords": ["人文社科", "学术前沿"],
+    "preferred_methods": ["理论研究", "实证研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "创新性不足"
+    ],
+    "writing_tips": [
+      "鼓励跨学科研究"
+    ],
+    "similar_journals": ["北京大学学报", "中国人民大学学报"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "zhexue-pinglun",
+    "name_cn": "文艺理论研究",
+    "name_en": "Theoretical Studies in Literature and Art",
+    "discipline": "艺术学",
+    "publisher": "中国文艺理论学会",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "文艺理论、美学、文化批评、中外文论",
+    "keywords": ["文艺理论", "美学", "文化批评", "文论"],
+    "preferred_methods": ["理论分析", "文本分析", "比较研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "理论创新不足",
+      "过于介绍性"
+    ],
+    "writing_tips": [
+      "鼓励理论原创",
+      "重视中西文论对话"
+    ],
+    "similar_journals": ["文艺研究", "文学评论"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "yishu-baijia",
+    "name_cn": "艺术百家",
+    "name_en": "Hundred Schools in Arts",
+    "discipline": "艺术学",
+    "publisher": "江苏省文化艺术研究院",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "艺术理论、艺术史、戏剧影视、音乐舞蹈、美术设计、非物质文化遗产",
+    "keywords": ["艺术理论", "戏剧", "影视", "音乐", "非遗"],
+    "preferred_methods": ["艺术分析", "历史研究", "田野调查", "文本分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "6000-12000字"},
+    "common_rejection_reasons": [
+      "过于经验描述",
+      "理论分析不足"
+    ],
+    "writing_tips": [
+      "鼓励艺术理论与实践结合",
+      "重视非遗研究"
+    ],
+    "similar_journals": ["文艺研究", "民族艺术"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "zongjiao-xue",
+    "name_cn": "世界宗教研究",
+    "name_en": "Studies in World Religions",
+    "discipline": "宗教学",
+    "publisher": "中国社会科学院世界宗教研究所",
+    "frequency": "双月刊",
+    "cssci_level": "来源刊",
+    "scope": "佛教、道教、伊斯兰教、基督教、民间宗教、宗教哲学、宗教社会学",
+    "keywords": ["佛教", "道教", "基督教", "宗教社会学"],
+    "preferred_methods": ["文献考证", "田野调查", "历史研究", "社会学分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版",
+      "注释": "脚注"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "文献基础薄弱",
+      "过于信仰化"
+    ],
+    "writing_tips": [
+      "强调学术客观性",
+      "重视田野调查",
+      "鼓励比较宗教研究"
+    ],
+    "similar_journals": ["宗教学研究", "世界宗教文化"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "kaogu-xuebao",
+    "name_cn": "考古学报",
+    "name_en": "Acta Archaeologica Sinica",
+    "discipline": "考古学",
+    "publisher": "中国社会科学院考古研究所",
+    "frequency": "季刊",
+    "cssci_level": "来源刊",
+    "scope": "田野考古发掘报告、考古学研究、科技考古、文化遗产保护",
+    "keywords": ["田野考古", "科技考古", "文化遗产"],
+    "preferred_methods": ["考古发掘", "科技检测", "类型学分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "材料不够新颖",
+      "分析不够深入"
+    ],
+    "writing_tips": [
+      "重视考古材料的完整报告",
+      "鼓励科技考古方法"
+    ],
+    "similar_journals": ["考古", "文物"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "makesi-zhuyi",
+    "name_cn": "马克思主义研究",
+    "name_en": "Studies on Marxism",
+    "discipline": "马克思主义理论",
+    "publisher": "中国社会科学院马克思主义研究院",
+    "frequency": "月刊",
+    "cssci_level": "来源刊",
+    "scope": "马克思主义基本原理、马克思主义中国化、马克思主义发展史、国外马克思主义、思想政治教育",
+    "keywords": ["马克思主义", "马克思主义中国化", "思政教育"],
+    "preferred_methods": ["理论分析", "文献研究", "历史分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "理论深度不够",
+      "过于宣传性"
+    ],
+    "writing_tips": [
+      "强调学术性与政治性统一",
+      "鼓励文本深度解读"
+    ],
+    "similar_journals": ["马克思主义与现实", "教学与研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "waiguo-wenxue",
+    "name_cn": "外国文学评论",
+    "name_en": "Foreign Literature Review",
+    "discipline": "外国文学",
+    "publisher": "中国社会科学院外国文学研究所",
+    "frequency": "季刊",
+    "cssci_level": "来源刊",
+    "scope": "外国文学理论研究、作家作品研究、比较文学、翻译研究",
+    "keywords": ["外国文学", "比较文学", "翻译研究", "文学理论"],
+    "preferred_methods": ["文本分析", "理论批评", "比较研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "文本分析不够深入",
+      "理论套用生硬"
+    ],
+    "writing_tips": [
+      "鼓励原创性文学批评",
+      "重视文本细读"
+    ],
+    "similar_journals": ["外国文学", "国外文学"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "tansuo-zhengming",
+    "name_cn": "探索与争鸣(扩)",
+    "name_en": "Exploration and Free Views (Extended)",
+    "discipline": "综合社科",
+    "publisher": "上海市社会科学界联合会",
+    "frequency": "月刊",
+    "cssci_level": "扩展刊",
+    "scope": "社会科学前沿问题",
+    "keywords": ["学术争鸣"],
+    "preferred_methods": ["理论分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "观点不够鲜明"
+    ],
+    "writing_tips": [
+      "鼓励思想争鸣"
+    ],
+    "similar_journals": ["探索与争鸣"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "jiaoyu-fazhan-k",
+    "name_cn": "教育发展研究(扩)",
+    "name_en": "Research in Educational Development (Extended)",
+    "discipline": "教育学",
+    "publisher": "上海市教育科学研究院",
+    "frequency": "半月刊",
+    "cssci_level": "扩展刊",
+    "scope": "教育发展战略与政策",
+    "keywords": ["教育政策"],
+    "preferred_methods": ["政策分析"],
+    "format_requirements": {
+      "摘要": "300字以内",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "6000-12000字"},
+    "common_rejection_reasons": [
+      "政策建议空泛"
+    ],
+    "writing_tips": [
+      "重视实证数据"
+    ],
+    "similar_journals": ["教育发展研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "shehuixue-k",
+    "name_cn": "社会学研究(扩)",
+    "name_en": "Sociological Studies (Extended)",
+    "discipline": "社会学",
+    "publisher": "中国社会科学院社会学研究所",
+    "frequency": "双月刊",
+    "cssci_level": "扩展刊",
+    "scope": "社会学理论与经验研究",
+    "keywords": ["社会学"],
+    "preferred_methods": ["质性研究"],
+    "format_requirements": {
+      "摘要": "400字以内",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "理论对话不足"
+    ],
+    "writing_tips": [
+      "重视理论对话"
+    ],
+    "similar_journals": ["社会学研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "xinli-kexue-k",
+    "name_cn": "心理科学(扩)",
+    "name_en": "Psychological Science (Extended)",
+    "discipline": "心理学",
+    "publisher": "中国心理学会",
+    "frequency": "双月刊",
+    "cssci_level": "扩展刊",
+    "scope": "心理学基础与应用研究",
+    "keywords": ["心理学"],
+    "preferred_methods": ["实验研究"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "6000-12000字"},
+    "common_rejection_reasons": [
+      "方法不规范"
+    ],
+    "writing_tips": [
+      "强调方法严谨"
+    ],
+    "similar_journals": ["心理科学"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "jingji-yanjiu-k",
+    "name_cn": "经济研究(扩)",
+    "name_en": "Economic Research Journal (Extended)",
+    "discipline": "经济学",
+    "publisher": "中国社会科学院经济研究所",
+    "frequency": "月刊",
+    "cssci_level": "扩展刊",
+    "scope": "经济学理论与应用",
+    "keywords": ["经济学"],
+    "preferred_methods": ["计量经济学"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "15000-25000字"},
+    "common_rejection_reasons": [
+      "模型设定不合理"
+    ],
+    "writing_tips": [
+      "鼓励微观数据研究"
+    ],
+    "similar_journals": ["经济研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "guanli-shijie-k",
+    "name_cn": "管理世界(扩)",
+    "name_en": "Management World (Extended)",
+    "discipline": "管理学",
+    "publisher": "国务院发展研究中心",
+    "frequency": "月刊",
+    "cssci_level": "扩展刊",
+    "scope": "管理理论与实践",
+    "keywords": ["管理"],
+    "preferred_methods": ["实证研究"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "15000-25000字"},
+    "common_rejection_reasons": [
+      "理论贡献不清晰"
+    ],
+    "writing_tips": [
+      "强调实践价值"
+    ],
+    "similar_journals": ["管理世界"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "zhengzhixue-k",
+    "name_cn": "政治学研究(扩)",
+    "name_en": "CASS Journal of Political Science (Extended)",
+    "discipline": "政治学",
+    "publisher": "中国社会科学院政治学研究所",
+    "frequency": "双月刊",
+    "cssci_level": "扩展刊",
+    "scope": "政治学理论与现实问题",
+    "keywords": ["政治学"],
+    "preferred_methods": ["理论分析"],
+    "format_requirements": {
+      "摘要": "400字以内",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "理论对话不足"
+    ],
+    "writing_tips": [
+      "重视政治学理论传统"
+    ],
+    "similar_journals": ["政治学研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "faxue-k",
+    "name_cn": "法学研究(扩)",
+    "name_en": "Chinese Journal of Law (Extended)",
+    "discipline": "法学",
+    "publisher": "中国社会科学院法学研究所",
+    "frequency": "双月刊",
+    "cssci_level": "扩展刊",
+    "scope": "法学理论与各部门法",
+    "keywords": ["法学"],
+    "preferred_methods": ["规范分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "论证不够深入"
+    ],
+    "writing_tips": [
+      "重视法教义学"
+    ],
+    "similar_journals": ["法学研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "xinwen-chuanbo-k",
+    "name_cn": "新闻与传播研究(扩)",
+    "name_en": "Journalism & Communication (Extended)",
+    "discipline": "新闻学与传播学",
+    "publisher": "中国社会科学院新闻与传播研究所",
+    "frequency": "月刊",
+    "cssci_level": "扩展刊",
+    "scope": "新闻传播理论与实践",
+    "keywords": ["新闻传播"],
+    "preferred_methods": ["内容分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "理论框架不清晰"
+    ],
+    "writing_tips": [
+      "须体现传播学视角"
+    ],
+    "similar_journals": ["新闻与传播研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "tushuguan-k",
+    "name_cn": "中国图书馆学报(扩)",
+    "name_en": "Journal of Library Science in China (Extended)",
+    "discipline": "图书馆、情报与文献学",
+    "publisher": "中国图书馆学会",
+    "frequency": "双月刊",
+    "cssci_level": "扩展刊",
+    "scope": "图书馆学与情报学",
+    "keywords": ["图书馆学", "情报学"],
+    "preferred_methods": ["文献计量"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "技术描述过多"
+    ],
+    "writing_tips": [
+      "鼓励理论与技术结合"
+    ],
+    "similar_journals": ["中国图书馆学报"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "wenxue-pinglun-k",
+    "name_cn": "文学评论(扩)",
+    "name_en": "Literary Review (Extended)",
+    "discipline": "中国文学",
+    "publisher": "中国社会科学院文学研究所",
+    "frequency": "双月刊",
+    "cssci_level": "扩展刊",
+    "scope": "中国文学研究",
+    "keywords": ["文学"],
+    "preferred_methods": ["文本细读"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "文本分析不够深入"
+    ],
+    "writing_tips": [
+      "重视文本细读"
+    ],
+    "similar_journals": ["文学评论"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "lishi-k",
+    "name_cn": "历史研究(扩)",
+    "name_en": "Historical Research (Extended)",
+    "discipline": "历史学",
+    "publisher": "中国社会科学院历史研究所",
+    "frequency": "双月刊",
+    "cssci_level": "扩展刊",
+    "scope": "历史学理论与研究",
+    "keywords": ["历史"],
+    "preferred_methods": ["史料考证"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "15000-25000字"},
+    "common_rejection_reasons": [
+      "史料运用不当"
+    ],
+    "writing_tips": [
+      "重视学术史梳理"
+    ],
+    "similar_journals": ["历史研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "zhexue-k",
+    "name_cn": "哲学研究(扩)",
+    "name_en": "Philosophical Research (Extended)",
+    "discipline": "哲学",
+    "publisher": "中国社会科学院哲学研究所",
+    "frequency": "月刊",
+    "cssci_level": "扩展刊",
+    "scope": "哲学理论与研究",
+    "keywords": ["哲学"],
+    "preferred_methods": ["概念分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-20000字"},
+    "common_rejection_reasons": [
+      "论证不够严密"
+    ],
+    "writing_tips": [
+      "概念界定须清晰"
+    ],
+    "similar_journals": ["哲学研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "yuyan-k",
+    "name_cn": "中国语文(扩)",
+    "name_en": "Studies of the Chinese Language (Extended)",
+    "discipline": "语言学",
+    "publisher": "中国社会科学院语言研究所",
+    "frequency": "双月刊",
+    "cssci_level": "扩展刊",
+    "scope": "汉语语言学研究",
+    "keywords": ["汉语", "语言学"],
+    "preferred_methods": ["语料分析"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "语料不够充分"
+    ],
+    "writing_tips": [
+      "重视语料真实性"
+    ],
+    "similar_journals": ["中国语文"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "tiyu-k",
+    "name_cn": "体育科学(扩)",
+    "name_en": "China Sport Science (Extended)",
+    "discipline": "体育学",
+    "publisher": "中国体育科学学会",
+    "frequency": "月刊",
+    "cssci_level": "扩展刊",
+    "scope": "体育科学研究",
+    "keywords": ["体育"],
+    "preferred_methods": ["实验研究"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "实验设计缺陷"
+    ],
+    "writing_tips": [
+      "重视实验规范"
+    ],
+    "similar_journals": ["体育科学"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "tongji-k",
+    "name_cn": "统计研究(扩)",
+    "name_en": "Statistical Research (Extended)",
+    "discipline": "统计学",
+    "publisher": "中国统计学会",
+    "frequency": "月刊",
+    "cssci_level": "扩展刊",
+    "scope": "统计学理论与方法",
+    "keywords": ["统计"],
+    "preferred_methods": ["数理统计"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "方法创新性不足"
+    ],
+    "writing_tips": [
+      "强调方法创新"
+    ],
+    "similar_journals": ["统计研究"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "huanjing-k",
+    "name_cn": "中国环境科学(扩)",
+    "name_en": "China Environmental Science (Extended)",
+    "discipline": "环境科学",
+    "publisher": "中国环境科学学会",
+    "frequency": "月刊",
+    "cssci_level": "扩展刊",
+    "scope": "环境科学研究",
+    "keywords": ["环境"],
+    "preferred_methods": ["实验研究"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "8000-15000字"},
+    "common_rejection_reasons": [
+      "数据问题"
+    ],
+    "writing_tips": [
+      "鼓励跨学科"
+    ],
+    "similar_journals": ["中国环境科学"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "zonghe-k",
+    "name_cn": "中国社会科学(扩)",
+    "name_en": "Social Sciences in China (Extended)",
+    "discipline": "综合社科",
+    "publisher": "中国社会科学院",
+    "frequency": "月刊",
+    "cssci_level": "扩展刊",
+    "scope": "社会科学综合研究",
+    "keywords": ["社科"],
+    "preferred_methods": ["理论分析"],
+    "format_requirements": {
+      "摘要": "中英文",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "15000-25000字"},
+    "common_rejection_reasons": [
+      "问题不够重大"
+    ],
+    "writing_tips": [
+      "关注重大问题"
+    ],
+    "similar_journals": ["中国社会科学"],
+    "submission_contact": "",
+    "online_system": ""
+  },
+  {
+    "id": "gaoxiao-k",
+    "name_cn": "北京大学学报(扩)",
+    "name_en": "Journal of Peking University (Extended)",
+    "discipline": "高校学报",
+    "publisher": "北京大学",
+    "frequency": "双月刊",
+    "cssci_level": "扩展刊",
+    "scope": "人文社会科学",
+    "keywords": ["人文社科"],
+    "preferred_methods": ["理论研究"],
+    "format_requirements": {
+      "摘要": "300字左右",
+      "关键词": "3-5个",
+      "正文": "Word排版"
+    },
+    "word_count_limit": {"正文": "10000-18000字"},
+    "common_rejection_reasons": [
+      "创新性不足"
+    ],
+    "writing_tips": [
+      "鼓励前沿研究"
+    ],
+    "similar_journals": ["北京大学学报"],
+    "submission_contact": "",
+    "online_system": ""
+  }
+]

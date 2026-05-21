@@ -594,3 +594,489 @@ class MethodologyAdvisor:
         resp = provider.chat([{"role": "user", "content": prompt}])
         content = getattr(resp, "content", str(resp))
         return content.strip() if content else None
+
+    # ------------------------------------------------------------------
+    # H-1: Research question diagnosis
+    # ------------------------------------------------------------------
+
+    def diagnose_question(self, question: str) -> Dict[str, Any]:
+        """Diagnose research question type and recommend methods."""
+        q_lower = question.lower()
+
+        # Question type detection
+        type_indicators = {
+            "描述性": ["现状", "情况", "分布", "特征", "比例", "多少", "如何分布", "什么样"],
+            "解释性": ["影响", "效应", "因果", "机制", "为什么", "导致", "作用", "路径", "中介", "调节"],
+            "探索性": ["探索", "发现", "理解", "如何", "过程", "经历", "体验"],
+            "评价性": ["评估", "效果", "成效", "有效性", "价值", "优劣", "比较"],
+            "设计性": ["开发", "设计", "构建", "方案", "模型", "框架", "系统"],
+        }
+
+        type_scores = {t: 0 for t in type_indicators}
+        for qtype, keywords in type_indicators.items():
+            for kw in keywords:
+                if kw in q_lower:
+                    type_scores[qtype] += 1
+
+        question_type = max(type_scores, key=type_scores.get) if max(type_scores.values()) > 0 else "描述性"
+
+        # Paradigm detection
+        paradigm_indicators = {
+            "实证主义": ["变量", "假设", "检验", "显著", "回归", "因果", "效应", "验证"],
+            "解释主义": ["理解", "意义", "建构", "体验", "叙事", "诠释", "主观"],
+            "批判理论": ["权力", "不平等", "压迫", "解放", "意识形态", "批判", "结构"],
+            "实用主义": ["解决", "实用", "效果", "混合", "多元", "整合"],
+        }
+
+        paradigm_scores = {p: 0 for p in paradigm_indicators}
+        for paradigm, keywords in paradigm_indicators.items():
+            for kw in keywords:
+                if kw in q_lower:
+                    paradigm_scores[paradigm] += 1
+
+        paradigm = max(paradigm_scores, key=paradigm_scores.get) if max(paradigm_scores.values()) > 0 else "实证主义"
+
+        # Time dimension
+        time_indicators = {
+            "横截面": ["现状", "当前", "目前", "某时", "截面"],
+            "纵向": ["变化", "发展", "趋势", "追踪", "历时", "演变", "过程"],
+            "回溯性": ["历史", "回顾", "过去", "追溯", "既往"],
+        }
+
+        time_scores = {t: 0 for t in time_indicators}
+        for tdim, keywords in time_indicators.items():
+            for kw in keywords:
+                if kw in q_lower:
+                    time_scores[tdim] += 1
+
+        time_dimension = max(time_scores, key=time_scores.get) if max(time_scores.values()) > 0 else "横截面"
+
+        # Analysis level
+        level_indicators = {
+            "个体": ["个体", "个人", "心理", "认知", "态度", "行为", "感受"],
+            "群体": ["群体", "团队", "组织", "班级", "社区", "家庭"],
+            "组织": ["组织", "机构", "学校", "企业", "单位", "制度"],
+            "社会": ["社会", "国家", "政策", "文化", "结构", "制度", "宏观"],
+        }
+
+        level_scores = {l: 0 for l in level_indicators}
+        for level, keywords in level_indicators.items():
+            for kw in keywords:
+                if kw in q_lower:
+                    level_scores[level] += 1
+
+        analysis_level = max(level_scores, key=level_scores.get) if max(level_scores.values()) > 0 else "个体"
+
+        # Method recommendations
+        recommendations = self._recommend_by_diagnosis(
+            question_type, paradigm, time_dimension, analysis_level
+        )
+
+        return {
+            "question": question,
+            "diagnosis": {
+                "question_type": question_type,
+                "paradigm": paradigm,
+                "time_dimension": time_dimension,
+                "analysis_level": analysis_level,
+            },
+            "recommended_methods": recommendations,
+        }
+
+    @staticmethod
+    def _recommend_by_diagnosis(qtype, paradigm, time_dim, level) -> List[Dict[str, Any]]:
+        """Recommend methods based on diagnosis."""
+        recs = []
+
+        method_map = {
+            ("解释性", "实证主义", "横截面", "个体"): [
+                {"method": "回归分析", "score": 0.95, "reason": "适合检验个体层面的横截面因果/相关关系"},
+                {"method": "结构方程模型", "score": 0.85, "reason": "适合检验复杂的中介/调节机制"},
+            ],
+            ("解释性", "实证主义", "纵向", "个体"): [
+                {"method": "交叉滞后模型", "score": 0.95, "reason": "适合分析个体层面变量间的纵向因果关系"},
+                {"method": "增长曲线模型", "score": 0.90, "reason": "适合追踪个体发展趋势"},
+            ],
+            ("解释性", "实证主义", "横截面", "群体"): [
+                {"method": "多层线性模型", "score": 0.95, "reason": "适合处理群体嵌套结构的数据"},
+                {"method": "双重差分", "score": 0.85, "reason": "适合评估群体层面的政策效应"},
+            ],
+            ("探索性", "解释主义", "横截面", "个体"): [
+                {"method": "半结构化访谈", "score": 0.95, "reason": "适合深入探索个体经验和意义建构"},
+                {"method": "焦点小组", "score": 0.80, "reason": "适合通过群体互动发现新视角"},
+            ],
+            ("探索性", "解释主义", "纵向", "个体"): [
+                {"method": "生命史访谈", "score": 0.95, "reason": "适合探索个体生命历程中的变化"},
+                {"method": "民族志", "score": 0.85, "reason": "适合长期参与观察下的深度理解"},
+            ],
+            ("描述性", "实证主义", "横截面", "个体"): [
+                {"method": "问卷调查", "score": 0.95, "reason": "适合大规模描述个体特征和态度分布"},
+                {"method": "描述性统计", "score": 0.90, "reason": "适合呈现变量分布和基本特征"},
+            ],
+            ("评价性", "实用主义", "横截面", "群体"): [
+                {"method": "准实验设计", "score": 0.95, "reason": "适合评估干预措施在群体中的效果"},
+                {"method": "混合方法", "score": 0.90, "reason": "适合结合定量效果与定性过程评价"},
+            ],
+            ("设计性", "实用主义", "横截面", "组织"): [
+                {"method": "设计型研究", "score": 0.95, "reason": "适合在真实情境中迭代开发解决方案"},
+                {"method": "行动研究", "score": 0.90, "reason": "适合研究者与实践者协作改进实践"},
+            ],
+        }
+
+        key = (qtype, paradigm, time_dim, level)
+        if key in method_map:
+            recs = method_map[key]
+        else:
+            # Generic fallback
+            recs = [
+                {"method": "问卷调查", "score": 0.70, "reason": "通用数据收集方法"},
+                {"method": "半结构化访谈", "score": 0.65, "reason": "适合补充定量数据的深度信息"},
+                {"method": "文献分析", "score": 0.60, "reason": "适合梳理现有研究基础"},
+            ]
+
+        return recs
+
+    # ------------------------------------------------------------------
+    # H-2: Mixed method design generator
+    # ------------------------------------------------------------------
+
+    def design_mixed_method(
+        self,
+        qual_question: str,
+        quant_question: str,
+        priority: str = "equal",
+    ) -> Dict[str, Any]:
+        """Generate a mixed-methods research design."""
+        # Auto-select design type
+        design_type = self._select_mixed_design(qual_question, quant_question, priority)
+
+        designs = {
+            "聚合式设计": {
+                "rationale": "同时收集定性和定量数据，分别分析后在解释阶段整合，以全面回答研究问题。",
+                "qual_phase": {
+                    "methods": ["半结构化访谈", "焦点小组"],
+                    "data": "访谈录音与转录文本",
+                    "analysis": "主题分析",
+                },
+                "quant_phase": {
+                    "methods": ["问卷调查"],
+                    "data": "结构化问卷数据",
+                    "analysis": "描述统计 + 相关/回归分析",
+                },
+                "integration_points": [
+                    {"phase": "设计阶段", "action": "统一抽样框架，确保两组数据来自同一人群"},
+                    {"phase": "解释阶段", "action": "对比定量结果与定性主题，验证、扩展或修正结论"},
+                ],
+                "timeline": [
+                    "第1-2周：设计定量问卷和定性访谈提纲",
+                    "第3-4周：同时进行数据收集",
+                    "第5-6周：分别进行定量和定性分析",
+                    "第7-8周：整合两种数据，撰写报告",
+                ],
+                "validation_strategy": "三角验证：比较定量结果与定性发现的一致性",
+            },
+            "解释性顺序设计": {
+                "rationale": "先收集定量数据识别总体模式，再用定性数据深入解释异常或关键发现。",
+                "qual_phase": {
+                    "methods": ["半结构化访谈"],
+                    "data": "针对定量异常值的深度访谈",
+                    "analysis": "主题分析或叙事分析",
+                },
+                "quant_phase": {
+                    "methods": ["问卷调查"],
+                    "data": "大规模问卷数据",
+                    "analysis": "描述统计 + 推断统计",
+                },
+                "integration_points": [
+                    {"phase": "设计阶段", "action": "基于定量分析结果设计定性抽样策略（目的性抽样）"},
+                    {"phase": "解释阶段", "action": "用定性数据解释定量结果中的异常值和统计显著性的实际意义"},
+                ],
+                "timeline": [
+                    "第1-2周：设计并发放问卷",
+                    "第3-4周：定量数据分析，识别需要深入解释的异常模式",
+                    "第5-6周：基于定量结果进行目的性抽样和定性访谈",
+                    "第7-8周：定性分析并整合两种数据",
+                ],
+                "validation_strategy": "扩展验证：定性数据扩展并深化对定量发现的解释",
+            },
+            "探索性顺序设计": {
+                "rationale": "先通过定性探索发现变量和假设，再设计定量工具进行检验。",
+                "qual_phase": {
+                    "methods": ["半结构化访谈", "参与观察"],
+                    "data": "访谈转录和观察记录",
+                    "analysis": "扎根理论或主题分析",
+                },
+                "quant_phase": {
+                    "methods": ["问卷调查"],
+                    "data": "基于定性发现开发的结构化问卷",
+                    "analysis": "验证性因子分析 + 结构方程模型",
+                },
+                "integration_points": [
+                    {"phase": "设计阶段", "action": "定性研究发现指导问卷题项开发"},
+                    {"phase": "工具开发阶段", "action": "基于定性主题设计量表维度与题项"},
+                ],
+                "timeline": [
+                    "第1-3周：定性探索（访谈/观察）",
+                    "第4-5周：定性分析，提炼变量和假设",
+                    "第6-7周：基于定性结果开发问卷并预测试",
+                    "第8-10周：大规模问卷调查与定量分析",
+                ],
+                "validation_strategy": "构建验证：定量数据验证定性阶段构建的理论/假设",
+            },
+            "嵌入式设计": {
+                "rationale": "以一种方法为主，另一种方法嵌入其中提供补充信息。",
+                "qual_phase": {
+                    "methods": ["深度访谈", "田野笔记"],
+                    "data": "嵌入在主要数据收集过程中的辅助数据",
+                    "analysis": "嵌入式主题分析",
+                },
+                "quant_phase": {
+                    "methods": ["实验/准实验", "问卷"],
+                    "data": "主要研究数据",
+                    "analysis": "实验效果分析",
+                },
+                "integration_points": [
+                    {"phase": "数据收集阶段", "action": "在主要数据收集中嵌入辅助方法（如实验中的访谈）"},
+                    {"phase": "解释阶段", "action": "辅助数据用于解释主要方法难以触及的过程和机制"},
+                ],
+                "timeline": [
+                    "第1-2周：设计主要研究方案",
+                    "第3-6周：实施主要研究（嵌入辅助数据收集）",
+                    "第7-8周：分别分析两种数据",
+                    "第9-10周：撰写整合报告",
+                ],
+                "validation_strategy": "互补验证：辅助数据提供主要方法无法获得的解释性信息",
+            },
+        }
+
+        design = designs.get(design_type, designs["聚合式设计"])
+
+        return {
+            "design_type": design_type,
+            "priority": priority,
+            "qual_question": qual_question,
+            "quant_question": quant_question,
+            **design,
+        }
+
+    @staticmethod
+    def _select_mixed_design(qual_q, quant_q, priority) -> str:
+        """Auto-select mixed design type."""
+        qual_lower = qual_q.lower()
+        quant_lower = quant_q.lower()
+
+        # Check for embedded indicators
+        embedded = "嵌入" in qual_lower + quant_lower or priority != "equal"
+        if embedded:
+            return "嵌入式设计"
+
+        # If qual question is exploratory -> exploratory sequential
+        exploratory = any(k in qual_lower for k in ["探索", "发现", "未知", "初步"])
+        if exploratory:
+            return "探索性顺序设计"
+
+        # If qual question is explanatory -> explanatory sequential
+        explanatory = any(k in qual_lower for k in ["解释", "为什么", "机制", "原因"])
+        if explanatory:
+            return "解释性顺序设计"
+
+        # Check for convergent indicators in both questions
+        convergent = any(k in qual_lower + quant_lower for k in ["验证", "三角", "互补", "全面"])
+        if convergent:
+            return "聚合式设计"
+
+        # Default: convergent
+        return "聚合式设计"
+
+    # ------------------------------------------------------------------
+    # H-3: Sampling strategy recommender
+    # ------------------------------------------------------------------
+
+    def recommend_sampling(
+        self,
+        research_design: str,
+        population: Optional[str] = None,
+        constraints: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Recommend sampling strategies based on research design."""
+        constraints = constraints or []
+        design_lower = research_design.lower()
+        pop_lower = (population or "").lower()
+
+        # Determine if qualitative or quantitative
+        is_qualitative = any(k in design_lower for k in ["质性", "定性", "访谈", "民族志", "案例", "qualitative"])
+        is_quantitative = any(k in design_lower for k in ["量化", "定量", "问卷", "实验", "调查", "quantitative"])
+
+        if not is_qualitative and not is_quantitative:
+            # Try to infer from population description
+            is_qualitative = any(k in pop_lower for k in ["访谈", "个案", "深度"])
+            is_quantitative = any(k in pop_lower for k in ["问卷", "大样本", "随机"])
+
+        if is_qualitative:
+            strategies = self._qualitative_strategies(design_lower, pop_lower, constraints)
+        elif is_quantitative:
+            strategies = self._quantitative_strategies(design_lower, pop_lower, constraints)
+        else:
+            strategies = self._qualitative_strategies(design_lower, pop_lower, constraints) + \
+                        self._quantitative_strategies(design_lower, pop_lower, constraints)
+
+        # Sort by estimated cost (lower cost first)
+        strategies.sort(key=lambda s: s.get("estimated_cost", 3))
+
+        return {
+            "research_design": research_design,
+            "population": population,
+            "recommended": strategies[:3],
+            "is_qualitative": is_qualitative,
+            "is_quantitative": is_quantitative,
+        }
+
+    @staticmethod
+    def _qualitative_strategies(design, population, constraints) -> List[Dict[str, Any]]:
+        """Qualitative sampling strategies."""
+        has_access_issue = any(k in " ".join(constraints).lower() for k in ["难以接触", "敏感", "隐蔽"])
+        needs_diversity = any(k in design for k in ["比较", "差异", "多元", "多样"])
+        theory_building = any(k in design for k in ["扎根", "理论", "grounded"])
+
+        strategies = [
+            {
+                "strategy": "目的性抽样",
+                "description": "根据研究目的有目的地选择能提供丰富信息的个案。",
+                "when_to_use": "适合大多数质性研究，尤其是当研究问题明确时。",
+                "sample_size_guidance": "通常15-30人，或直至理论饱和。",
+                "pros": ["能获取信息丰富的个案", "与研究问题高度相关"],
+                "cons": ["不能推广到总体", "研究者主观性强"],
+                "estimated_cost": 2,
+            },
+            {
+                "strategy": "理论抽样",
+                "description": "基于正在形成的理论，选择能最大化概念变异的个案。",
+                "when_to_use": "扎根理论研究中，用于发展和检验理论。",
+                "sample_size_guidance": "直至理论饱和（通常20-60人）。",
+                "pros": ["能最大化理论发展", "系统性强"],
+                "cons": ["需要迭代数据收集", "前期难以确定总样本量"],
+                "estimated_cost": 3,
+            },
+            {
+                "strategy": "滚雪球抽样",
+                "description": "通过已有参与者推荐新的参与者。",
+                "when_to_use": "难以接触的群体（如边缘群体、特定职业群体）。",
+                "sample_size_guidance": "通常10-30人，取决于群体规模和可达性。",
+                "pros": ["适合难以接触的群体", "成本低"],
+                "cons": ["样本同质化风险", "依赖社会网络"],
+                "estimated_cost": 1,
+            },
+            {
+                "strategy": "最大变异抽样",
+                "description": "有意选择特征差异最大的个案。",
+                "when_to_use": "需要展示现象在不同情境下的多样性时。",
+                "sample_size_guidance": "通常20-40人，覆盖多个变异维度。",
+                "pros": ["能展示现象全貌", "增强结果丰富性"],
+                "cons": ["数据量大", "分析复杂"],
+                "estimated_cost": 3,
+            },
+            {
+                "strategy": "典型案例抽样",
+                "description": "选择能代表平均水平的典型个案。",
+                "when_to_use": "需要描述'一般'情况或向实践者展示典型经验时。",
+                "sample_size_guidance": "通常5-15个典型案例。",
+                "pros": ["结果易于理解", "与实践联系紧密"],
+                "cons": ["可能忽略边缘情况", "典型性判断主观"],
+                "estimated_cost": 2,
+            },
+            {
+                "strategy": "关键案例抽样",
+                "description": "选择对理论或实践具有关键意义的个案。",
+                "when_to_use": "需要检验理论边界条件或展示关键转折点时。",
+                "sample_size_guidance": "通常1-5个关键案例（深度分析）。",
+                "pros": ["能揭示关键机制", "深度极高"],
+                "cons": ["推广性极弱", "案例选择至关重要"],
+                "estimated_cost": 2,
+            },
+        ]
+
+        # Adjust recommendations
+        if has_access_issue:
+            for s in strategies:
+                if s["strategy"] == "滚雪球抽样":
+                    s["estimated_cost"] = 0
+        if theory_building:
+            for s in strategies:
+                if s["strategy"] == "理论抽样":
+                    s["estimated_cost"] = 0
+        if needs_diversity:
+            for s in strategies:
+                if s["strategy"] == "最大变异抽样":
+                    s["estimated_cost"] = 0
+
+        return strategies
+
+    @staticmethod
+    def _quantitative_strategies(design, population, constraints) -> List[Dict[str, Any]]:
+        """Quantitative sampling strategies."""
+        has_strata = any(k in " ".join(constraints).lower() for k in ["分层", "子群", "组别"])
+        has_clusters = any(k in " ".join(constraints).lower() for k in ["整群", "班级", "学校", "社区"])
+        resource_limited = any(k in " ".join(constraints).lower() for k in ["资源有限", "低成本", "预算", "时间紧"])
+
+        strategies = [
+            {
+                "strategy": "简单随机抽样",
+                "description": "总体中每个个体被抽中的概率相等。",
+                "when_to_use": "总体规模小、易于获得完整名单时。",
+                "sample_size_guidance": "根据效应量和检验力计算，通常N=100-500。",
+                "pros": ["统计推断最简单", "偏差最小"],
+                "cons": ["需要完整抽样框", "大总体成本高"],
+                "estimated_cost": 2,
+            },
+            {
+                "strategy": "分层抽样",
+                "description": "先将总体按特征分层，再从每层中随机抽样。",
+                "when_to_use": "总体内部差异大，需要保证各子群代表性时。",
+                "sample_size_guidance": "每层样本量按比例或最优分配，总N=200-1000。",
+                "pros": ["提高代表性", "可进行层间比较"],
+                "cons": ["需要分层信息", "设计复杂"],
+                "estimated_cost": 3,
+            },
+            {
+                "strategy": "整群抽样",
+                "description": "以群体（如班级、社区）为单位随机抽样，然后调查群内全部个体。",
+                "when_to_use": "总体分散、个体难以单独接触时。",
+                "sample_size_guidance": "群数≥30，群内样本量根据ICC调整。",
+                "pros": ["操作方便", "成本低"],
+                "cons": ["设计效应导致样本量增加", "群内同质性高"],
+                "estimated_cost": 1,
+            },
+            {
+                "strategy": "多阶段抽样",
+                "description": "分多个阶段逐步缩小抽样范围（如省→学校→班级→学生）。",
+                "when_to_use": "大规模调查，总体层级结构明显时。",
+                "sample_size_guidance": "每阶段样本量根据设计效应调整，总N=500-5000。",
+                "pros": ["适合大规模调查", "操作可行性强"],
+                "cons": ["设计复杂", "误差累积"],
+                "estimated_cost": 3,
+            },
+            {
+                "strategy": "便利抽样",
+                "description": "选择最容易获得的样本。",
+                "when_to_use": "探索性研究、预测试、资源极度受限时。",
+                "sample_size_guidance": "尽可能大（≥50），但结果需谨慎解释。",
+                "pros": ["最便捷", "成本最低"],
+                "cons": ["代表性差", "选择偏差大"],
+                "estimated_cost": 0,
+            },
+        ]
+
+        if has_strata:
+            for s in strategies:
+                if s["strategy"] == "分层抽样":
+                    s["estimated_cost"] = 0
+        if has_clusters:
+            for s in strategies:
+                if s["strategy"] == "整群抽样":
+                    s["estimated_cost"] = 0
+        if resource_limited:
+            for s in strategies:
+                if s["strategy"] == "便利抽样":
+                    s["estimated_cost"] = 0
+
+        return strategies

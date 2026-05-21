@@ -1,0 +1,157 @@
+{
+  "name": "文学批评理论框架库",
+  "description": "涵盖10种主要文学批评理论的框架参考，包含核心概念、关键学者、代表作及应用步骤",
+  "tags": ["文学", "理论", "批评", "框架", "方法论", "文化研究"],
+  "frameworks": [
+    {
+      "id": "psychoanalysis",
+      "name_cn": "精神分析批评",
+      "name_en": "Psychoanalytic Criticism",
+      "core_concepts": ["无意识", "欲望", "压抑", "俄狄浦斯情结", "镜像阶段", "创伤", "梦境", "升华"],
+      "key_scholars": ["西格蒙德·弗洛伊德", "雅克·拉康", "梅兰妮·克莱因", "哈罗德·布鲁姆"],
+      "seminal_works": ["Freud, S. The Interpretation of Dreams (1900)", "Lacan, J. Ecrits (1966)", "Bloom, H. The Anxiety of Influence (1973)"],
+      "application_steps": [
+        "识别文本中的欲望结构与压抑机制",
+        "分析人物的心理动力与无意识动机",
+        "考察叙事中的梦境、幻觉、症状等精神分析意象",
+        "探讨作者-文本-读者的三角关系与认同机制"
+      ],
+      "suitable_text_types": ["现代主义小说", "哥特小说", "自传体文学", "戏剧", "诗歌"]
+    },
+    {
+      "id": "feminism",
+      "name_cn": "女性主义批评",
+      "name_en": "Feminist Criticism",
+      "core_concepts": ["性别建构", "父权制", "身体政治", "凝视", "姐妹情谊", "交叉性", "女性书写"],
+      "key_scholars": ["西蒙娜·德·波伏娃", "凯特·米利特", "伊莱恩·肖瓦尔特", "朱迪斯·巴特勒", "盖尔·鲁宾"],
+      "seminal_works": ["Beauvoir, S. de. The Second Sex (1949)", "Millett, K. Sexual Politics (1970)", "Butler, J. Gender Trouble (1990)"],
+      "application_steps": [
+        "分析文本中的性别表征与权力关系",
+        "识别女性角色的主体性与被客体化方式",
+        "考察叙事声音与性别视角的关联",
+        "评估文本对父权意识形态的复制或挑战"
+      ],
+      "suitable_text_types": ["女性作家作品", "家庭小说", "浪漫主义诗歌", "当代小说", "影视文本"]
+    },
+    {
+      "id": "postcolonialism",
+      "name_cn": "后殖民批评",
+      "name_en": "Postcolonial Criticism",
+      "core_concepts": ["东方主义", " hybridity（混杂性）", " mimicry（模仿）", "第三空间", "属下阶层", "文化帝国主义", "反叙事"],
+      "key_scholars": ["爱德华·萨义德", "佳亚特里·斯皮瓦克", "霍米·巴巴", "弗朗茨·法农"],
+      "seminal_works": ["Said, E. Orientalism (1978)", "Spivak, G. 'Can the Subaltern Speak?' (1988)", "Bhabha, H. The Location of Culture (1994)"],
+      "application_steps": [
+        "识别文本中的殖民话语与权力结构",
+        "分析被殖民者的表征方式与声音问题",
+        "考察文化混杂、翻译与身份协商",
+        "评估文本对殖民主义的复制、抵抗或超越"
+      ],
+      "suitable_text_types": ["殖民地文学", "移民文学", "世界英语文学", "旅行书写", "历史小说"]
+    },
+    {
+      "id": "new_historicism",
+      "name_cn": "新历史主义",
+      "name_en": "New Historicism",
+      "core_concepts": ["历史的文本性", "文本的历史性", "文化诗学", "权力 circulation", "边缘与中心", "共时性", "轶事"],
+      "key_scholars": ["斯蒂芬·格林布拉特", "路易斯·蒙特罗斯", "乔纳森·多利莫尔"],
+      "seminal_works": ["Greenblatt, S. Renaissance Self-Fashioning (1980)", "Montrose, L. 'The Poetics and Politics of Culture' (1989)"],
+      "application_steps": [
+        "将文学文本与非文学文本（法律、医学、宗教等）并置",
+        "分析文本如何参与当时的意识形态建构与协商",
+        "考察权力关系在文本内外的流通与转化",
+        "关注被主流历史叙事遮蔽的边缘声音"
+      ],
+      "suitable_text_types": ["文艺复兴文学", "莎士比亚戏剧", "早期现代文本", "历史文献与文学互读"]
+    },
+    {
+      "id": "structuralism",
+      "name_cn": "结构主义",
+      "name_en": "Structuralism",
+      "core_concepts": ["二元对立", "深层结构", "语言系统", "叙事语法", "符号", "共时性分析", "神话素"],
+      "key_scholars": ["罗兰·巴特", "弗拉基米尔·普罗普", "热拉尔·热奈特", "克劳德·列维-斯特劳斯", "罗曼·雅各布森"],
+      "seminal_works": ["Propp, V. Morphology of the Folktale (1928)", "Barthes, R. S/Z (1970)", "Genette, G. Narrative Discourse (1972)"],
+      "application_steps": [
+        "识别文本的表层结构与深层结构",
+        "分析叙事功能、角色类型与情节序列",
+        "考察二元对立系统及其意义生成",
+        "运用叙事学概念分析时间、视角、声音"
+      ],
+      "suitable_text_types": ["民间故事", "神话", "叙事小说", "诗歌", "戏剧"]
+    },
+    {
+      "id": "poststructuralism",
+      "name_cn": "后结构主义",
+      "name_en": "Poststructuralism",
+      "core_concepts": ["延异", "去中心化", "互文性", "话语", "权力/知识", "作者之死", "意义的滑动"],
+      "key_scholars": ["雅克·德里达", "米歇尔·福柯", "罗兰·巴特", "朱莉亚·克里斯蒂娃"],
+      "seminal_works": ["Derrida, J. Of Grammatology (1967)", "Foucault, M. The Archaeology of Knowledge (1969)", "Barthes, R. 'The Death of the Author' (1967)"],
+      "application_steps": [
+        "解构文本中看似稳定的二元对立",
+        "追踪意义在文本中的滑动与延异",
+        "分析话语如何建构知识与主体",
+        "考察文本的互文网络与引用链"
+      ],
+      "suitable_text_types": ["哲学文本", "实验小说", "现代主义诗歌", "理论文本", "先锋戏剧"]
+    },
+    {
+      "id": "reader_response",
+      "name_cn": "读者反应批评",
+      "name_en": "Reader-Response Criticism",
+      "core_concepts": ["阅读过程", "期待视野", "隐含读者", "阐释共同体", "审美经验", "意义生成", "接受史"],
+      "key_scholars": ["沃尔夫冈·伊瑟尔", "汉斯·罗伯特·尧斯", "斯坦利·费什", "诺曼·霍兰德"],
+      "seminal_works": ["Iser, W. The Act of Reading (1976)", "Jauss, H. R. Toward an Aesthetic of Reception (1982)", "Fish, S. Is There a Text in This Class? (1980)"],
+      "application_steps": [
+        "分析文本如何引导或挑战读者的期待",
+        "考察空白、不确定性与读者填补过程",
+        "研究不同时代读者的接受与阐释差异",
+        "评估阅读情境（教育、阶层、文化）对意义的影响"
+      ],
+      "suitable_text_types": ["经典文学作品", "教育文本", "畅销书", "儿童文学", "跨文化翻译文本"]
+    },
+    {
+      "id": "cultural_materialism",
+      "name_cn": "文化唯物主义",
+      "name_en": "Cultural Materialism",
+      "core_concepts": ["意识形态", "文化生产", "物质条件", "霸权", "抵制", "历史语境", "机构分析"],
+      "key_scholars": ["雷蒙德·威廉斯", "艾伦·辛菲尔德", "乔纳森·多利莫尔", "皮埃尔·马歇雷"],
+      "seminal_works": ["Williams, R. Marxism and Literature (1977)", "Sinfield, A. Faultlines (1992)", "Dollimore, J. Radical Tragedy (1984)"],
+      "application_steps": [
+        "分析文本产生的物质条件与机构背景",
+        "考察文本与主导意识形态的协商关系",
+        "识别文本中的抵制声音与颠覆潜能",
+        "将文学置于更广泛的文化实践与权力斗争中理解"
+      ],
+      "suitable_text_types": ["文艺复兴戏剧", "工人阶级文学", "流行文化文本", "政治文学", "戏剧"]
+    },
+    {
+      "id": "ecocriticism",
+      "name_cn": "生态批评",
+      "name_en": "Ecocriticism",
+      "core_concepts": ["自然书写", "环境正义", "人类中心主义", "地方感", "生态女性主义", "慢暴力", "人类世"],
+      "key_scholars": ["劳伦斯·布伊尔", "彻丽尔·格洛特费尔蒂", "罗布·尼克松", "蒂莫西·莫顿"],
+      "seminal_works": ["Glotfelty, C. & Fromm, H. (eds.) The Ecocriticism Reader (1996)", "Buell, L. The Environmental Imagination (1995)", "Nixon, R. Slow Violence and the Environmentalism of the Poor (2011)"],
+      "application_steps": [
+        "分析文本中的自然表征与环境想象",
+        "考察人类-自然关系的叙事建构",
+        "评估文本的环境意识与生态伦理立场",
+        "关注环境正义、物种歧视与地方政治"
+      ],
+      "suitable_text_types": ["自然书写", "田园诗", "科幻小说", "环境报告文学", "原住民文学"]
+    },
+    {
+      "id": "deconstruction",
+      "name_cn": "解构主义",
+      "name_en": "Deconstruction",
+      "core_concepts": ["延异", "踪迹", "替补", "药", "边缘", "双重阅读", "逻各斯中心主义"],
+      "key_scholars": ["雅克·德里达", "保罗·德曼", "J.希利斯·米勒"],
+      "seminal_works": ["Derrida, J. Of Grammatology (1967)", "de Man, P. Allegories of Reading (1979)", "Miller, J. H. Fiction and Repetition (1982)"],
+      "application_steps": [
+        "识别文本依赖的二元对立与等级结构",
+        "展示主导项如何依赖被压抑项",
+        "追踪文本中自我解构的修辞张力",
+        "进行双重阅读：既展示文本的表面意义，又揭示其自我颠覆"
+      ],
+      "suitable_text_types": ["哲学文本", "浪漫主义诗歌", "现代主义小说", "理论文本", "法律文本"]
+    }
+  ]
+}

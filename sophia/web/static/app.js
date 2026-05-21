@@ -22,6 +22,11 @@ const App = {
             this.updateWorkspaceDisplay(this.state.currentWorkspace);
         }
 
+        // Initialize Mermaid for diagram rendering
+        if (window.mermaid) {
+            mermaid.initialize({ startOnLoad: false, theme: 'default' });
+        }
+
         this.loadSessions();
     },
 
@@ -285,6 +290,7 @@ const App = {
             this.state.currentTextEl.innerHTML = this.renderMarkdown(final);
             this.renderMath(this.state.currentTextEl);
             this.highlightCode(this.state.currentTextEl);
+            this.renderMermaid(this.state.currentTextEl);
             this.state.currentAssistantEl = null;
             this.state.currentTextEl = null;
             this.state.currentActivityEl = null;
@@ -362,6 +368,25 @@ const App = {
         container.querySelectorAll('pre code').forEach(block => {
             try { hljs.highlightElement(block); } catch(e) {}
         });
+    },
+
+    renderMermaid(container) {
+        try {
+            if (!window.mermaid) return;
+            const blocks = container.querySelectorAll('pre code.language-mermaid');
+            const nodes = [];
+            blocks.forEach(block => {
+                const pre = block.parentElement;
+                const div = document.createElement('div');
+                div.className = 'mermaid';
+                div.textContent = block.textContent;
+                pre.replaceWith(div);
+                nodes.push(div);
+            });
+            if (nodes.length > 0) {
+                mermaid.run({ nodes });
+            }
+        } catch(e) { console.error('Mermaid error', e); }
     },
 
     showError(msg) {

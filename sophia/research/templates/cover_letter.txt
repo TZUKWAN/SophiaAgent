@@ -1,0 +1,17 @@
+Dear {editor_name},
+
+We wish to submit our manuscript entitled "{paper_title}" for consideration for publication in {journal_name}.
+
+{journal_scope}
+
+Our study makes the following contributions:
+{highlights}
+
+This work falls within the scope of {journal_name} because it addresses core themes central to the journal's readership. We believe the findings will be of significant interest to the journal's audience.
+
+All authors have approved the manuscript and agree with its submission to {journal_name}. The manuscript has not been published previously and is not under consideration elsewhere.
+
+We appreciate your time and consideration.
+
+Sincerely,
+{authors}

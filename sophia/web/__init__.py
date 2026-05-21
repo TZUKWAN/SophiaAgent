@@ -18,6 +18,7 @@ from fastapi import Request
 
 from sophia.agent import SophiaAgent
 from sophia.config import Config
+from sophia.research.notes import ZettelkastenStore
 from sophia.session import SessionManager
 
 logger = logging.getLogger(__name__)
@@ -355,6 +356,71 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
             "provider": config.model.provider,
             "workspace": config.session.workspace,
         }
+
+    # ── Notes API ────────────────────────────────────────────
+
+    def _get_note_store():
+        return ZettelkastenStore(config.session.workspace)
+
+    @app.get("/api/notes")
+    async def list_notes(query: str = "", tags: str = "", linked_to: str = "", note_type: str = ""):
+        store = _get_note_store()
+        tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else None
+        results = store.search(query=query, tags=tag_list, linked_to=linked_to or None, note_type=note_type or None)
+        return {"notes": results, "count": len(results)}
+
+    @app.get("/api/notes/{note_id}")
+    async def get_note(note_id: str):
+        store = _get_note_store()
+        note = store.get(note_id)
+        if not note:
+            raise HTTPException(status_code=404, detail="Note not found")
+        return note
+
+    @app.post("/api/notes")
+    async def create_note(request: Request):
+        body = await request.json()
+        store = _get_note_store()
+        result = store.create(
+            title=body.get("title", ""),
+            content=body.get("content", ""),
+            note_type=body.get("note_type", "concept"),
+            tags=body.get("tags"),
+            links=body.get("links"),
+            source_type=body.get("source_type", ""),
+            source_id=body.get("source_id", ""),
+        )
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        return result
+
+    @app.put("/api/notes/{note_id}")
+    async def update_note(note_id: str, request: Request):
+        body = await request.json()
+        store = _get_note_store()
+        result = store.update(
+            note_id=note_id,
+            title=body.get("title"),
+            content=body.get("content"),
+            tags=body.get("tags"),
+            links=body.get("links"),
+        )
+        if "error" in result:
+            raise HTTPException(status_code=404, detail=result["error"])
+        return result
+
+    @app.delete("/api/notes/{note_id}")
+    async def delete_note(note_id: str):
+        store = _get_note_store()
+        result = store.delete(note_id)
+        if "error" in result:
+            raise HTTPException(status_code=404, detail=result["error"])
+        return result
+
+    @app.get("/api/notes/graph")
+    async def notes_graph():
+        store = _get_note_store()
+        return store.get_link_graph()
 
     # ── Citation Network ─────────────────────────────────────
 

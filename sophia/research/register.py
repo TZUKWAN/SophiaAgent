@@ -87,6 +87,10 @@ def register_method_tools(registry: ToolRegistry, engines: dict):
     if latex_reporter:
         _register_latex_tools(registry, latex_reporter)
 
+    coding_project = engines.get("coding_project")
+    if coding_project:
+        _register_coding_project_tools(registry, coding_project)
+
 
 # =====================================================================
 # Empirical workflow orchestrator (3 tools)
@@ -2443,4 +2447,140 @@ def _register_pipeline_tools(registry, engine):
             "required": [],
         },
         _snapshot,
+    )
+
+
+# =====================================================================
+# Coding Project (NVivo-style, 6 tools)
+# =====================================================================
+
+def _register_coding_project_tools(registry, engine):
+    def _create_project(args):
+        return engine.create_project(args)
+    registry.register(
+        "coding_create_project",
+        "Create a new NVivo-style qualitative coding project with an empty coding tree and optional text data.",
+        {
+            "type": "object",
+            "properties": {
+                "project_name": {"type": "string", "description": "Project name"},
+                "workspace": {"type": "string", "description": "Workspace path for persistence (optional)"},
+                "texts": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Text documents to code (optional)",
+                },
+                "description": {"type": "string", "description": "Project description (optional)"},
+            },
+            "required": ["project_name"],
+        },
+        _create_project,
+    )
+
+    def _edit_tree(args):
+        return engine.edit_tree(args)
+    registry.register(
+        "coding_edit_tree",
+        "Add, remove, or rename nodes in the coding tree hierarchy.",
+        {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "Project ID"},
+                "action": {
+                    "type": "string",
+                    "enum": ["add", "remove", "rename"],
+                    "description": "Tree edit action",
+                },
+                "node_name": {"type": "string", "description": "Node name (for add/rename)"},
+                "node_id": {"type": "string", "description": "Node ID (for remove/rename)"},
+                "parent_id": {"type": "string", "description": "Parent node ID for add (default root)"},
+                "color": {"type": "string", "description": "Node color hex (default #4A90D9)"},
+                "description": {"type": "string", "description": "Node description"},
+            },
+            "required": ["project_id", "action"],
+        },
+        _edit_tree,
+    )
+
+    def _assign_code(args):
+        return engine.assign_code(args)
+    registry.register(
+        "coding_assign_code",
+        "Assign a code to a text segment by marking start/end character positions.",
+        {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "Project ID"},
+                "code_id": {"type": "string", "description": "Coding tree node ID"},
+                "coder_id": {"type": "string", "description": "Coder identifier"},
+                "text_index": {"type": "integer", "description": "Index of the text in the project"},
+                "start": {"type": "integer", "description": "Start character offset"},
+                "end": {"type": "integer", "description": "End character offset (exclusive)"},
+                "text_excerpt": {"type": "string", "description": "Optional excerpt (auto-extracted if omitted)"},
+            },
+            "required": ["project_id", "code_id", "coder_id", "text_index", "start", "end"],
+        },
+        _assign_code,
+    )
+
+    def _add_memo(args):
+        return engine.add_memo(args)
+    registry.register(
+        "coding_add_memo",
+        "Attach a research memo to a coding node.",
+        {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "Project ID"},
+                "code_id": {"type": "string", "description": "Coding tree node ID"},
+                "content": {"type": "string", "description": "Memo content"},
+            },
+            "required": ["project_id", "code_id", "content"],
+        },
+        _add_memo,
+    )
+
+    def _reliability_report(args):
+        return engine.reliability_report(args)
+    registry.register(
+        "coding_reliability_report",
+        "Compute inter-coder reliability (Cohen's Kappa) between two coders in the project.",
+        {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "Project ID"},
+                "coder1_id": {"type": "string", "description": "First coder identifier"},
+                "coder2_id": {"type": "string", "description": "Second coder identifier"},
+                "unit_type": {
+                    "type": "string",
+                    "enum": ["segment", "text"],
+                    "description": "Unit of analysis (default segment)",
+                    "default": "segment",
+                },
+            },
+            "required": ["project_id", "coder1_id", "coder2_id"],
+        },
+        _reliability_report,
+    )
+
+    def _saturation_curve(args):
+        return engine.saturation_curve(args)
+    registry.register(
+        "coding_saturation_curve",
+        "Compute coding saturation: marginal decrease curve of new codes over assignments or texts.",
+        {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "Project ID"},
+                "coder_id": {"type": "string", "description": "Optional coder filter"},
+                "unit_type": {
+                    "type": "string",
+                    "enum": ["assignment", "text"],
+                    "description": "Aggregation unit (default assignment)",
+                    "default": "assignment",
+                },
+            },
+            "required": ["project_id"],
+        },
+        _saturation_curve,
     )

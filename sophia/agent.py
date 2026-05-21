@@ -70,15 +70,26 @@ from sophia.subagent import SubAgentManager, register_subagent_tools
 from sophia.swarm import FilteredToolRegistry, SwarmOrchestrator
 from sophia.task_harness import build_task_harness_prompt, is_empirical_request
 from sophia.tools.analysis import register_analysis_tools
+from sophia.tools.chinese_nlp import register_chinese_nlp_tools
 from sophia.tools.citation import register_citation_tools
 from sophia.tools.data_collection import register_data_collection_tools
 from sophia.tools.files import register_file_tools
+from sophia.tools.interview_questionnaire import register_interview_questionnaire_tools
+from sophia.tools.design_enhanced import register_design_enhanced_tools
+from sophia.tools.ethics_support import register_ethics_support_tools
+from sophia.tools.journal import register_journal_tools
+from sophia.tools.ppt_generator import register_ppt_tools
 from sophia.tools.registry import ToolRegistry
+from sophia.tools.translation import register_translation_tools
 from sophia.tools.research import register_research_tools
+from sophia.tools.reading import register_reading_tools
 from sophia.tools.review import register_review_tools
 from sophia.tools.swarm import register_swarm_tools
+from sophia.tools.templates import register_template_tools
+from sophia.tools.theory import register_theory_tools
 from sophia.tools.web import register_web_tools
 from sophia.tools.writing import register_writing_tools
+from sophia.tools.writing_en import register_writing_en_tools
 from sophia.trajectory import TrajectoryRecorder
 from sophia.workspace_context import (
     asks_for_paper_document,
@@ -193,6 +204,10 @@ class SophiaAgent:
         self.method_searcher = MethodSearcher(self.method_catalog, self.provider)
         self.method_builder = MethodBuilder(self.method_catalog, self.provider)
 
+        # Template registry
+        from sophia.prompts.templates.registry import TemplateRegistry
+        self.template_registry = TemplateRegistry()
+
         # Register all tools and hooks
         self._register_tools()
         self._register_hooks()
@@ -207,15 +222,38 @@ class SophiaAgent:
         register_research_tools(self.tools)
         register_citation_tools(self.tools, self.workspace)
         register_writing_tools(self.tools, self.workspace, self.result_store)
+        register_writing_en_tools(self.tools, self.workspace, self.provider)
         register_analysis_tools(self.tools, self.workspace)
         register_web_tools(self.tools)
         register_review_tools(self.tools, self.workspace)
+        register_reading_tools(self.tools, self.workspace)
 
         # Data collection (macro / finance / scrape / news)
         try:
             register_data_collection_tools(self.tools, self.result_store, self.workspace_guard)
         except Exception as e:
             logger.warning("Data collection tools registration failed: %s", e)
+
+        # Chinese NLP tools
+        register_chinese_nlp_tools(self.tools)
+
+        # Interview & questionnaire tools (Phase G)
+        register_interview_questionnaire_tools(self.tools)
+
+        # Enhanced research design tools (Phase H)
+        register_design_enhanced_tools(self.tools)
+
+        # Ethics & IRB support tools (Phase I)
+        register_ethics_support_tools(self.tools)
+
+        # Journal matching & submission guide (Phase J)
+        register_journal_tools(self.tools)
+
+        # Academic presentation slides (Phase K)
+        register_ppt_tools(self.tools)
+
+        # Academic translation (Phase L)
+        register_translation_tools(self.tools)
 
         # P0
         register_goal_tools(self.tools, self.goals)
@@ -229,7 +267,7 @@ class SophiaAgent:
         # Experiment
         register_experiment_tools(self.tools, self.experiments)
 
-        # Research method engines (77 tools)
+        # Research method engines
         register_method_tools(self.tools, {
             "statistics": self.stat_engine,
             "design": self.design_engine,
@@ -246,6 +284,12 @@ class SophiaAgent:
             "empirical_workflow": self.empirical_workflow,
             "latex_reporter": self.latex_reporter,
         })
+
+        # Template tools
+        register_template_tools(self.tools, self.template_registry)
+
+        # Theory mapping tools
+        register_theory_tools(self.tools, provider=self.provider)
 
         # Self-evolving discovery system (5 tools)
         register_discovery_tools(self.tools, {

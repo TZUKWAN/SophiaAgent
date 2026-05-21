@@ -9,14 +9,23 @@ from __future__ import annotations
 import json
 import logging
 import math
+import os
 import re
 import string
+import uuid
 from collections import Counter, defaultdict
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
 from sophia.research._input import resolve_parent_ids
+from sophia.research.chinese_nlp import (
+    ChineseTokenizer,
+    detect_language,
+    analyze_sentiment_cn,
+    _CN_STOPWORDS,
+)
 
 # ---------------------------------------------------------------------------
 # Optional sentiment dependency
@@ -121,6 +130,31 @@ def _tokenize(text: str) -> List[str]:
 def _remove_stopwords(tokens: List[str], stopwords: Set[str] = _EN_STOPWORDS) -> List[str]:
     """Remove stopwords from a token list."""
     return [t for t in tokens if t not in stopwords and len(t) > 2]
+
+
+def _detect_language_for_texts(texts: List[str], language: str = "auto") -> str:
+    """Resolve language setting for a batch of texts.
+
+    Parameters
+    ----------
+    texts : list of str
+        Text segments to examine.
+    language : str
+        'auto' (detect from content), 'zh', or 'en'.
+
+    Returns
+    -------
+    str
+        'zh' or 'en'.
+    """
+    if language != "auto":
+        return language
+    # Detect from concatenated sample of texts
+    sample = " ".join(texts[:min(5, len(texts))])
+    detected = detect_language(sample)
+    if detected in ("zh", "mixed"):
+        return "zh"
+    return "en"
 
 
 def _extract_noun_phrases(text: str) -> List[str]:
@@ -242,7 +276,8 @@ class QualitativeEngine:
         approach: str = str(args.get("approach", "inductive")).lower()
         n_themes = args.get("n_themes")
         existing_themes: List[str] = args.get("existing_themes", [])
-        language: str = str(args.get("language", "en"))
+        language_raw: str = str(args.get("language", "auto"))
+        language = _detect_language_for_texts(texts, language_raw)
 
         review = args.get("review", True)
         # ---- LLM path ----
@@ -250,7 +285,7 @@ class QualitativeEngine:
             inner = self._thematic_llm(texts, approach, n_themes, existing_themes, language, review=review)
         else:
             # ---- Fallback: keyword frequency + co-occurrence clustering ----
-            inner = self._thematic_keyword(texts, approach, n_themes, existing_themes)
+            inner = self._thematic_keyword(texts, approach, n_themes, existing_themes, language)
         parsed = json.loads(inner)
         try:
             n_themes = len(parsed.get("themes", []))
@@ -267,6 +302,14 @@ class QualitativeEngine:
     # ------------------------------------------------------------------
 
     def _prompt_open_code(self, text: str, language: str) -> str:
+        if language == "zh":
+            return (
+                f"你是一名质性研究助手。请对以下文本进行开放编码。\n"
+                f"识别文本中所有相关的编码（概念/想法）。\n"
+                f"以JSON格式回复，包含键 'codes'，值为编码字符串列表。\n"
+                f"示例: {{\"codes\": [\"社会资本\", \"社会网络\", \"信任\"]}}\n\n"
+                f"文本: {text[:500]}"
+            )
         return (
             f"You are a qualitative research assistant. Perform open coding on the following text. "
             f"Identify all relevant codes (concepts/ideas) present in the text. "
@@ -290,6 +333,13 @@ class QualitativeEngine:
 
     def _prompt_consolidate(self, codes: List[str], language: str) -> str:
         codes_json = json.dumps(codes, ensure_ascii=False)
+        if language == "zh":
+            return (
+                f"你是一名质性研究助手。请整合以下开放编码。\n"
+                f"将语义相同或高度相似的编码合并为统一编码。\n"
+                f"以JSON格式回复，包含键 'code_map'，值为字典，其中每个键是原始编码，每个值是对应的整合编码。\n\n"
+                f"编码: {codes_json}"
+            )
         return (
             f"You are a qualitative research assistant. Consolidate the following open codes. "
             f"Merge semantically identical or highly similar codes into unified codes. "
@@ -313,13 +363,27 @@ class QualitativeEngine:
     def _prompt_themes(self, consolidated_codes: List[str], pass1_entries: List[dict],
                        code_map: Dict[str, str], language: str, n_themes: Optional[int],
                        existing_themes: List[str]) -> str:
+        codes_json = json.dumps(sorted(set(consolidated_codes)), ensure_ascii=False)
+        if language == "zh":
+            if existing_themes:
+                theme_instr = f"使用以下预定义主题: {json.dumps(existing_themes, ensure_ascii=False)}。"
+            elif n_themes:
+                theme_instr = f"生成恰好{n_themes}个主题。"
+            else:
+                theme_instr = "生成最能概括数据的主题。"
+            return (
+                f"你是一名质性研究助手。基于以下整合编码，为主题分析生成主题。{theme_instr}\n"
+                f"每个主题包含: label（标签）、description（描述）、keywords（关键词列表）。\n"
+                f"以JSON格式回复，包含键 'themes'，值为对象列表，每个对象包含 "
+                f"'id', 'label', 'description', 'keywords'（字符串列表）。\n\n"
+                f"整合编码: {codes_json}"
+            )
         if existing_themes:
             theme_instr = f"Use these predefined themes: {json.dumps(existing_themes, ensure_ascii=False)}."
         elif n_themes:
             theme_instr = f"Generate exactly {n_themes} themes."
         else:
             theme_instr = "Generate the main themes that best capture the data."
-        codes_json = json.dumps(sorted(set(consolidated_codes)), ensure_ascii=False)
         return (
             f"You are a qualitative research assistant. Based on the following consolidated codes, "
             f"generate themes for thematic analysis. {theme_instr} "
@@ -420,7 +484,7 @@ class QualitativeEngine:
         Pass 4 (optional): Self-review.
         """
         if self.provider is None:
-            return self._thematic_keyword(texts, approach, n_themes, existing_themes)
+            return self._thematic_keyword(texts, approach, n_themes, existing_themes, language)
 
         # Pass 1: Open coding
         pass1_entries = []
@@ -441,7 +505,7 @@ class QualitativeEngine:
 
         if len(failures) > len(texts) * 0.5:
             logger.warning(f"LLM coding failed for {len(failures)}/{len(texts)} texts; falling back to keyword method")
-            return self._thematic_keyword(texts, approach, n_themes, existing_themes)
+            return self._thematic_keyword(texts, approach, n_themes, existing_themes, language)
 
         # Pass 2: Code consolidation
         all_codes = sorted(set(c for entry in pass1_entries for c in entry["codes"]))
@@ -474,7 +538,7 @@ class QualitativeEngine:
 
         if not themes:
             logger.warning("No themes generated by LLM; falling back to keyword method")
-            return self._thematic_keyword(texts, approach, n_themes, existing_themes)
+            return self._thematic_keyword(texts, approach, n_themes, existing_themes, language)
 
         # Assign integer IDs if missing
         for idx, theme in enumerate(themes):
@@ -513,13 +577,19 @@ class QualitativeEngine:
         }
         return _json(result)
 
-    def _thematic_keyword(self, texts, approach, n_themes, existing_themes):
+    def _thematic_keyword(self, texts, approach, n_themes, existing_themes, language="en"):
         """Fallback thematic analysis using keyword frequency + co-occurrence."""
+        is_zh = (language == "zh")
+        cn_tok = ChineseTokenizer() if is_zh else None
+
         # Tokenize all texts
         all_tokens: List[str] = []
         doc_tokens: List[List[str]] = []
         for t in texts:
-            tokens = _remove_stopwords(_tokenize(t))
+            if is_zh:
+                tokens = cn_tok.remove_stopwords(cn_tok.tokenize(t))
+            else:
+                tokens = _remove_stopwords(_tokenize(t))
             doc_tokens.append(tokens)
             all_tokens.extend(tokens)
 
@@ -546,7 +616,10 @@ class QualitativeEngine:
             coded_segments = []
             theme_keywords: Dict[int, List[str]] = {}
             for idx, theme_label in enumerate(existing_themes):
-                theme_words = _remove_stopwords(_tokenize(theme_label))
+                if is_zh:
+                    theme_words = cn_tok.remove_stopwords(cn_tok.tokenize(theme_label))
+                else:
+                    theme_words = _remove_stopwords(_tokenize(theme_label))
                 theme_keywords[idx] = theme_words
                 themes.append({
                     "id": idx,
@@ -684,6 +757,8 @@ class QualitativeEngine:
             keywords : list of str, optional (extract if not given)
             min_freq : int (default 2)
             window : int (co-occurrence window, default 5)
+            language : str
+                Language code: 'auto' (detect), 'zh', or 'en'.
 
         Returns
         -------
@@ -698,12 +773,24 @@ class QualitativeEngine:
         keywords: Optional[List[str]] = args.get("keywords")
         min_freq: int = int(args.get("min_freq", 2))
         window: int = int(args.get("window", 5))
+        language_raw: str = str(args.get("language", "auto"))
+        language = _detect_language_for_texts(texts, language_raw)
+        is_zh = (language == "zh")
+
+        # Prepare tokenizer for Chinese
+        cn_tok = ChineseTokenizer() if is_zh else None
+
+        # Stopwords set to use
+        stopwords = _CN_STOPWORDS if is_zh else _EN_STOPWORDS
 
         # Tokenize all texts
         all_tokens: List[str] = []
         doc_tokens: List[List[str]] = []
         for t in texts:
-            tokens = _tokenize(t)
+            if is_zh:
+                tokens = cn_tok.tokenize(t)
+            else:
+                tokens = _tokenize(t)
             doc_tokens.append(tokens)
             all_tokens.extend(tokens)
 
@@ -716,13 +803,16 @@ class QualitativeEngine:
         # Keyword frequencies
         keyword_freq: Dict[str, int] = {}
         if keywords:
-            kw_set = {k.lower() for k in keywords}
-            keyword_freq = {k: word_freq.get(k.lower(), 0) for k in keywords}
+            if is_zh:
+                keyword_freq = {k: word_freq.get(k, 0) for k in keywords}
+            else:
+                kw_set = {k.lower() for k in keywords}
+                keyword_freq = {k: word_freq.get(k.lower(), 0) for k in keywords}
         else:
             # Extract top keywords (non-stopword, min_freq)
             top_kws = []
             for w, c in word_freq.most_common(50):
-                if w not in _EN_STOPWORDS and len(w) > 2 and c >= min_freq:
+                if w not in stopwords and (len(w) > 2 if not is_zh else len(w) >= 2) and c >= min_freq:
                     top_kws.append(w)
             keyword_freq = {w: word_freq[w] for w in top_kws[:20]}
             keywords = top_kws[:20]
@@ -730,19 +820,25 @@ class QualitativeEngine:
         # Co-occurrence matrix within sliding window
         co_matrix: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
         target_words = set(keyword_freq.keys()) if keyword_freq else set(filtered_freq.keys())
-        target_words_lower = {w.lower() for w in target_words}
+        if is_zh:
+            target_words_set = target_words  # Chinese tokens don't need lowercasing
+        else:
+            target_words_set = {w.lower() for w in target_words}
 
         for tokens in doc_tokens:
-            tokens_lower = [t.lower() for t in tokens]
-            for i in range(len(tokens_lower)):
-                if tokens_lower[i] not in target_words_lower:
+            if is_zh:
+                lookup_tokens = tokens
+            else:
+                lookup_tokens = [t.lower() for t in tokens]
+            for i in range(len(lookup_tokens)):
+                if lookup_tokens[i] not in target_words_set:
                     continue
-                for j in range(i + 1, min(i + window, len(tokens_lower))):
-                    if tokens_lower[j] not in target_words_lower:
+                for j in range(i + 1, min(i + window, len(lookup_tokens))):
+                    if lookup_tokens[j] not in target_words_set:
                         continue
-                    if tokens_lower[i] != tokens_lower[j]:
-                        co_matrix[tokens_lower[i]][tokens_lower[j]] += 1
-                        co_matrix[tokens_lower[j]][tokens_lower[i]] += 1
+                    if lookup_tokens[i] != lookup_tokens[j]:
+                        co_matrix[lookup_tokens[i]][lookup_tokens[j]] += 1
+                        co_matrix[lookup_tokens[j]][lookup_tokens[i]] += 1
 
         # Convert defaultdicts to regular dicts for JSON serialization
         co_matrix_json: Dict[str, Dict[str, int]] = {}
@@ -765,6 +861,7 @@ class QualitativeEngine:
             "n_documents": len(texts),
             "total_tokens": len(all_tokens),
             "unique_tokens": len(set(all_tokens)),
+            "language": language,
         }
         try:
             result["apa"] = (
@@ -805,7 +902,8 @@ class QualitativeEngine:
         stage: str = str(args.get("stage", "open")).lower()
         existing_codes: List[str] = args.get("existing_codes", [])
         axial_core: Optional[str] = args.get("axial_core")
-        language: str = str(args.get("language", "en"))
+        language_raw: str = str(args.get("language", "auto"))
+        language = _detect_language_for_texts(texts, language_raw)
 
         if stage == "open":
             inner = self._grounded_open(texts, language)
@@ -879,14 +977,25 @@ class QualitativeEngine:
 
     def _grounded_open_llm(self, texts, language):
         """Open coding with LLM."""
-        prompt = (
-            "You are a qualitative researcher performing open coding in grounded theory.\n"
-            "For each text segment, generate concise codes that capture key concepts.\n\n"
-            "Respond in JSON format:\n"
-            '  "codes": [{"code": "...", "frequency": N, "type": "descriptive|in_vivo|..."}]\n'
-            '  "coded_segments": [{"text_index": N, "codes": ["..."]}]\n\n'
-            "Texts:\n"
-        )
+        if language == "zh":
+            prompt = (
+                "你是一名质性研究者，正在进行扎根理论的开放编码。\n"
+                "请为每段文本生成简洁的编码，捕捉关键概念。\n"
+                "使用Strauss和Corbin的编码术语（开放编码、主轴编码、选择性编码）。\n\n"
+                "以JSON格式回复:\n"
+                '  "codes": [{"code": "...", "frequency": N, "type": "描述性|本土化|..."}]\n'
+                '  "coded_segments": [{"text_index": N, "codes": ["..."]}]\n\n'
+                "文本:\n"
+            )
+        else:
+            prompt = (
+                "You are a qualitative researcher performing open coding in grounded theory.\n"
+                "For each text segment, generate concise codes that capture key concepts.\n\n"
+                "Respond in JSON format:\n"
+                '  "codes": [{"code": "...", "frequency": N, "type": "descriptive|in_vivo|..."}]\n'
+                '  "coded_segments": [{"text_index": N, "codes": ["..."]}]\n\n'
+                "Texts:\n"
+            )
         for i, t in enumerate(texts):
             excerpt = t[:400] + ("..." if len(t) > 400 else "")
             prompt += f"[{i}] {excerpt}\n"
@@ -922,20 +1031,35 @@ class QualitativeEngine:
 
         # ---- LLM path ----
         if self.provider is not None:
-            prompt = (
-                "You are a qualitative researcher performing axial coding in grounded theory.\n"
-                "Organize these codes into categories around a core phenomenon.\n\n"
-                f"Codes: {json.dumps(existing_codes)}\n"
-            )
-            if axial_core:
-                prompt += f"Core category: {axial_core}\n"
-
-            prompt += (
-                "\nRespond in JSON format:\n"
-                '  "categories": [{"name": "...", "codes": [...], "description": "..."}]\n'
-                '  "relationships": [{"from": "...", "to": "...", "type": "causal|contextual|..."}]\n'
-                '  "core_category": "..."\n'
-            )
+            codes_json = json.dumps(existing_codes, ensure_ascii=False)
+            if language == "zh":
+                prompt = (
+                    "你是一名质性研究者，正在进行扎根理论的主轴编码。\n"
+                    "将以下编码组织为围绕核心现象的类别。\n\n"
+                    f"编码: {codes_json}\n"
+                )
+                if axial_core:
+                    prompt += f"核心类属: {axial_core}\n"
+                prompt += (
+                    "\n以JSON格式回复:\n"
+                    '  "categories": [{"name": "...", "codes": [...], "description": "..."}]\n'
+                    '  "relationships": [{"from": "...", "to": "...", "type": "causal|contextual|..."}]\n'
+                    '  "core_category": "..."\n'
+                )
+            else:
+                prompt = (
+                    "You are a qualitative researcher performing axial coding in grounded theory.\n"
+                    "Organize these codes into categories around a core phenomenon.\n\n"
+                    f"Codes: {codes_json}\n"
+                )
+                if axial_core:
+                    prompt += f"Core category: {axial_core}\n"
+                prompt += (
+                    "\nRespond in JSON format:\n"
+                    '  "categories": [{"name": "...", "codes": [...], "description": "..."}]\n'
+                    '  "relationships": [{"from": "...", "to": "...", "type": "causal|contextual|..."}]\n'
+                    '  "core_category": "..."\n'
+                )
             try:
                 response = self.provider.chat([{"role": "user", "content": prompt}])
                 content = response.content or ""
@@ -1009,16 +1133,29 @@ class QualitativeEngine:
 
         # ---- LLM path ----
         if self.provider is not None:
-            prompt = (
-                "You are a qualitative researcher performing selective coding in grounded theory.\n"
-                "Identify the core category and relate all other categories to it.\n\n"
-                f"Codes: {json.dumps(existing_codes)}\n\n"
-                "Respond in JSON format:\n"
-                '  "core_category": "..."\n'
-                '  "core_category_description": "..."\n'
-                '  "subcategories": [{"name": "...", "relation_to_core": "..."}]\n'
-                '  "theoretical_memo": "..."\n'
-            )
+            codes_json = json.dumps(existing_codes, ensure_ascii=False)
+            if language == "zh":
+                prompt = (
+                    "你是一名质性研究者，正在进行扎根理论的选择性编码。\n"
+                    "识别核心类属，并将所有其他类属与之关联。\n\n"
+                    f"编码: {codes_json}\n\n"
+                    "以JSON格式回复:\n"
+                    '  "core_category": "..."\n'
+                    '  "core_category_description": "..."\n'
+                    '  "subcategories": [{"name": "...", "relation_to_core": "..."}]\n'
+                    '  "theoretical_memo": "..."\n'
+                )
+            else:
+                prompt = (
+                    "You are a qualitative researcher performing selective coding in grounded theory.\n"
+                    "Identify the core category and relate all other categories to it.\n\n"
+                    f"Codes: {codes_json}\n\n"
+                    "Respond in JSON format:\n"
+                    '  "core_category": "..."\n'
+                    '  "core_category_description": "..."\n'
+                    '  "subcategories": [{"name": "...", "relation_to_core": "..."}]\n'
+                    '  "theoretical_memo": "..."\n'
+                )
             try:
                 response = self.provider.chat([{"role": "user", "content": prompt}])
                 content = response.content or ""
@@ -1075,6 +1212,8 @@ class QualitativeEngine:
         ----------
         args : dict
             texts : list of str
+            language : str
+                Language code: 'auto' (detect), 'zh', or 'en'.
 
         Returns
         -------
@@ -1085,11 +1224,42 @@ class QualitativeEngine:
         if not texts:
             return _json({"error": "No texts provided for sentiment analysis."})
 
+        language_raw: str = str(args.get("language", "auto"))
+        language = _detect_language_for_texts(texts, language_raw)
+        is_zh = (language == "zh")
+
         results: List[Dict[str, Any]] = []
         positive_words_all: Counter = Counter()
         negative_words_all: Counter = Counter()
 
-        if HAS_VADER:
+        if is_zh:
+            # ---- Chinese sentiment path ----
+            cn_tok = ChineseTokenizer()
+            for i, text in enumerate(texts):
+                cn_result = analyze_sentiment_cn(text, cn_tok)
+                label = cn_result["sentiment"]
+                compound = cn_result["score"]
+                key_phrases = cn_result.get("key_phrases", [])
+
+                # Separate positive and negative phrases
+                from sophia.research.chinese_nlp import _CN_POSITIVE, _CN_NEGATIVE
+                pos_phrases = [p for p in key_phrases if p in _CN_POSITIVE]
+                neg_phrases = [p for p in key_phrases if p in _CN_NEGATIVE]
+
+                positive_words_all.update(pos_phrases)
+                negative_words_all.update(neg_phrases)
+
+                results.append({
+                    "text_index": i,
+                    "label": label,
+                    "compound": round(compound, 4),
+                    "confidence": cn_result.get("confidence", 0.0),
+                    "key_positive_words": pos_phrases[:5],
+                    "key_negative_words": neg_phrases[:5],
+                    "dimensions": cn_result.get("dimensions", {}),
+                    "method": cn_result.get("backend", "dict"),
+                })
+        elif HAS_VADER:
             analyzer = SentimentIntensityAnalyzer()
             for i, text in enumerate(texts):
                 scores = analyzer.polarity_scores(text)
@@ -1164,6 +1334,11 @@ class QualitativeEngine:
         compounds = [r["compound"] for r in results]
         avg_compound = sum(compounds) / len(compounds) if compounds else 0.0
 
+        if is_zh:
+            method_label = "chinese_lexicon"
+        else:
+            method_label = "vader" if HAS_VADER else "simple_lexicon"
+
         result = {
             "sentiments": results,
             "overall_distribution": dict(dist),
@@ -1171,13 +1346,14 @@ class QualitativeEngine:
             "key_positive_words": top_positive,
             "key_negative_words": top_negative,
             "n_texts": len(texts),
-            "method": "vader" if HAS_VADER else "simple_lexicon",
+            "method": method_label,
+            "language": language,
         }
         try:
             pos_pct = dict(dist).get("positive", 0) / len(texts) * 100 if texts else 0
             neg_pct = dict(dist).get("negative", 0) / len(texts) * 100 if texts else 0
             result["apa"] = (
-                f"Sentiment analysis of {len(texts)} texts ({'VADER' if HAS_VADER else 'simple lexicon'}) "
+                f"Sentiment analysis of {len(texts)} texts ({method_label}) "
                 f"showed {pos_pct:.1f}% positive and {neg_pct:.1f}% negative sentiment "
                 f"(mean compound score = {avg_compound:.3f})."
             )
@@ -1438,3 +1614,666 @@ class QualitativeEngine:
         except Exception:
             pass
         return self._final(args, result, "research_coding_reliability")
+
+
+# ======================================================================
+# NVivo-style Coding System
+# ======================================================================
+
+class CodingTree:
+    """Hierarchical coding tree for qualitative coding projects.
+
+    Supports multi-level parent-child hierarchy with node attributes
+    (color, description, timestamps).
+    """
+
+    def __init__(self) -> None:
+        self._nodes: Dict[str, Dict[str, Any]] = {}
+        self._root_id = "root"
+        self._nodes[self._root_id] = {
+            "id": self._root_id,
+            "name": "Root",
+            "parent_id": None,
+            "children": [],
+            "color": "#CCCCCC",
+            "description": "Root of coding tree",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "modified_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    @staticmethod
+    def _new_id() -> str:
+        return "code_" + uuid.uuid4().hex[:8]
+
+    def create_node(self, name: str, parent_id: str = "root",
+                    color: str = "#4A90D9", description: str = "") -> Dict[str, Any]:
+        """Create a new coding node under *parent_id*."""
+        if parent_id not in self._nodes:
+            raise ValueError(f"Parent node '{parent_id}' not found.")
+        node_id = self._new_id()
+        now = datetime.now(timezone.utc).isoformat()
+        node = {
+            "id": node_id,
+            "name": name,
+            "parent_id": parent_id,
+            "children": [],
+            "color": color,
+            "description": description,
+            "created_at": now,
+            "modified_at": now,
+        }
+        self._nodes[node_id] = node
+        self._nodes[parent_id]["children"].append(node_id)
+        return dict(node)
+
+    def delete_node(self, node_id: str) -> bool:
+        """Delete a node and all its descendants."""
+        if node_id == self._root_id:
+            raise ValueError("Cannot delete the root node.")
+        if node_id not in self._nodes:
+            return False
+        node = self._nodes[node_id]
+        parent_id = node.get("parent_id")
+        children = list(node.get("children", []))
+        for child_id in children:
+            self.delete_node(child_id)
+        if parent_id and parent_id in self._nodes:
+            parent = self._nodes[parent_id]
+            parent["children"] = [c for c in parent["children"] if c != node_id]
+        del self._nodes[node_id]
+        return True
+
+    def rename_node(self, node_id: str, new_name: str) -> Dict[str, Any]:
+        """Rename a coding node."""
+        if node_id not in self._nodes:
+            raise ValueError(f"Node '{node_id}' not found.")
+        self._nodes[node_id]["name"] = new_name
+        self._nodes[node_id]["modified_at"] = datetime.now(timezone.utc).isoformat()
+        return dict(self._nodes[node_id])
+
+    def get_node(self, node_id: str) -> Optional[Dict[str, Any]]:
+        """Return a copy of a node by ID, or None."""
+        if node_id in self._nodes:
+            return dict(self._nodes[node_id])
+        return None
+
+    def list_nodes(self) -> List[Dict[str, Any]]:
+        """Return all nodes (excluding root) as a flat list."""
+        return [dict(n) for nid, n in self._nodes.items() if nid != self._root_id]
+
+    def to_tree(self) -> Dict[str, Any]:
+        """Export the tree as a nested JSON-serialisable dict."""
+        def _build(nid: str) -> Dict[str, Any]:
+            node = self._nodes[nid]
+            return {
+                "id": node["id"],
+                "name": node["name"],
+                "color": node["color"],
+                "description": node["description"],
+                "created_at": node["created_at"],
+                "modified_at": node["modified_at"],
+                "children": [_build(c) for c in node.get("children", [])],
+            }
+        return _build(self._root_id)
+
+    @classmethod
+    def from_tree(cls, data: Dict[str, Any]) -> "CodingTree":
+        """Reconstruct a CodingTree from a nested dict produced by *to_tree*."""
+        tree = cls()
+        tree._nodes.clear()
+
+        def _load(node_data: Dict[str, Any], parent_id: Optional[str] = None) -> None:
+            nid = node_data["id"]
+            tree._nodes[nid] = {
+                "id": nid,
+                "name": node_data["name"],
+                "parent_id": parent_id,
+                "children": [c["id"] for c in node_data.get("children", [])],
+                "color": node_data.get("color", "#4A90D9"),
+                "description": node_data.get("description", ""),
+                "created_at": node_data.get("created_at", ""),
+                "modified_at": node_data.get("modified_at", ""),
+            }
+            for child in node_data.get("children", []):
+                _load(child, nid)
+
+        _load(data)
+        return tree
+
+    def find_by_name(self, name: str) -> List[Dict[str, Any]]:
+        """Find all nodes matching *name* exactly."""
+        return [dict(n) for n in self._nodes.values() if n["name"] == name]
+
+
+class CodingProject:
+    """NVivo-style qualitative coding project.
+
+    Associates a coding tree with text data and provides:
+    - Code assignment to text segments (start/end positions)
+    - Memo management per coding node
+    - Inter-coder reliability (Cohen's Kappa)
+    - Coding frequency statistics and cross-tabulation
+    - Coding saturation detection
+    - Persistence to JSON files
+    """
+
+    def __init__(self, provider=None, store=None, guard=None):
+        self.provider = provider
+        self.store = store
+        self.guard = guard
+        self._projects: Dict[str, Dict[str, Any]] = {}
+
+    # ------------------------------------------------------------------
+    # Persistence helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _projects_dir(workspace: str) -> str:
+        d = os.path.join(workspace, ".sophia", "coding_projects")
+        os.makedirs(d, exist_ok=True)
+        return d
+
+    def _persist(self, project_id: str) -> None:
+        proj = self._projects.get(project_id)
+        if proj is None:
+            return
+        workspace = proj.get("workspace")
+        if not workspace:
+            return
+        d = self._projects_dir(workspace)
+        path = os.path.join(d, f"{project_id}.json")
+        tree: CodingTree = proj["tree"]
+        serialisable = {k: v for k, v in proj.items() if k != "tree"}
+        serialisable["tree_data"] = tree.to_tree()
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(serialisable, f, ensure_ascii=False, indent=2, default=str)
+
+    def _load_from_disk(self, project_id: str, workspace: str) -> Optional[Dict[str, Any]]:
+        d = self._projects_dir(workspace)
+        path = os.path.join(d, f"{project_id}.json")
+        if not os.path.exists(path):
+            return None
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        tree = CodingTree.from_tree(data.pop("tree_data"))
+        data["tree"] = tree
+        self._projects[project_id] = data
+        return data
+
+    # ------------------------------------------------------------------
+    # ResultStore plumbing
+    # ------------------------------------------------------------------
+
+    def _sanitize_params(self, args: dict) -> dict:
+        clean: Dict[str, Any] = {}
+        for k, v in args.items():
+            if isinstance(v, str) and len(v) > 2000:
+                clean[k] = f"<str len={len(v)}>"
+            elif isinstance(v, list) and len(v) > 80:
+                clean[k] = f"<list len={len(v)}>"
+            elif isinstance(v, dict) and len(v) > 50:
+                clean[k] = f"<dict keys={len(v)}>"
+            else:
+                clean[k] = v
+        return clean
+
+    def _final(self, args: dict, result: dict, tool_name: str) -> str:
+        if "error" in result:
+            return _json(result)
+        if self.store is None:
+            return _json(result)
+        try:
+            parents = resolve_parent_ids(args)
+        except Exception:
+            parents = []
+        sanitized = self._sanitize_params(args)
+        rid = self.store.store(
+            result, kind="result", tool=tool_name,
+            params=sanitized, parents=parents,
+        )
+        result = {**result, "result_id": rid}
+        return _json(result)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def create_project(self, args: dict) -> str:
+        project_name = args.get("project_name", "")
+        if not project_name:
+            return _json({"error": "project_name is required."})
+        workspace = args.get("workspace", "")
+        texts: List[str] = args.get("texts", [])
+        description: str = args.get("description", "")
+
+        project_id = "proj_" + uuid.uuid4().hex[:8]
+        tree = CodingTree()
+        now = datetime.now(timezone.utc).isoformat()
+        project = {
+            "project_id": project_id,
+            "project_name": project_name,
+            "description": description,
+            "workspace": workspace,
+            "texts": list(texts),
+            "tree": tree,
+            "assignments": [],
+            "memos": {},
+            "created_at": now,
+            "modified_at": now,
+        }
+        self._projects[project_id] = project
+        self._persist(project_id)
+
+        result = {
+            "project_id": project_id,
+            "project_name": project_name,
+            "description": description,
+            "n_texts": len(texts),
+            "created_at": now,
+        }
+        return self._final(args, result, "coding_create_project")
+
+    def edit_tree(self, args: dict) -> str:
+        project_id = args.get("project_id", "")
+        if project_id not in self._projects:
+            return _json({"error": f"Project '{project_id}' not found."})
+        proj = self._projects[project_id]
+        tree: CodingTree = proj["tree"]
+
+        action = str(args.get("action", "")).lower()
+        try:
+            if action == "add":
+                name = args.get("node_name", "")
+                if not name:
+                    return _json({"error": "node_name is required for add."})
+                parent_id = args.get("parent_id", "root")
+                color = args.get("color", "#4A90D9")
+                desc = args.get("description", "")
+                node = tree.create_node(name, parent_id=parent_id, color=color, description=desc)
+                proj["modified_at"] = datetime.now(timezone.utc).isoformat()
+                self._persist(project_id)
+                result = {"action": "add", "node": node}
+                return self._final(args, result, "coding_edit_tree")
+
+            elif action == "remove":
+                node_id = args.get("node_id", "")
+                if not node_id:
+                    return _json({"error": "node_id is required for remove."})
+                ok = tree.delete_node(node_id)
+                proj["modified_at"] = datetime.now(timezone.utc).isoformat()
+                self._persist(project_id)
+                result = {"action": "remove", "node_id": node_id, "removed": ok}
+                return self._final(args, result, "coding_edit_tree")
+
+            elif action == "rename":
+                node_id = args.get("node_id", "")
+                new_name = args.get("node_name", "")
+                if not node_id or not new_name:
+                    return _json({"error": "node_id and node_name are required for rename."})
+                node = tree.rename_node(node_id, new_name)
+                proj["modified_at"] = datetime.now(timezone.utc).isoformat()
+                self._persist(project_id)
+                result = {"action": "rename", "node": node}
+                return self._final(args, result, "coding_edit_tree")
+
+            else:
+                return _json({"error": f"Unknown action '{action}'. Use 'add', 'remove', or 'rename'."})
+        except ValueError as exc:
+            return _json({"error": str(exc)})
+
+    def assign_code(self, args: dict) -> str:
+        project_id = args.get("project_id", "")
+        if project_id not in self._projects:
+            return _json({"error": f"Project '{project_id}' not found."})
+        proj = self._projects[project_id]
+
+        code_id = args.get("code_id", "")
+        coder_id = args.get("coder_id", "")
+        text_index = args.get("text_index")
+        start = args.get("start")
+        end = args.get("end")
+
+        if code_id is None or coder_id is None or text_index is None or start is None or end is None:
+            return _json({"error": "code_id, coder_id, text_index, start, end are all required."})
+
+        text_index = int(text_index)
+        start = int(start)
+        end = int(end)
+
+        tree: CodingTree = proj["tree"]
+        if tree.get_node(code_id) is None:
+            return _json({"error": f"Code node '{code_id}' not found in tree."})
+
+        texts = proj.get("texts", [])
+        if text_index < 0 or (texts and text_index >= len(texts)):
+            return _json({"error": f"text_index {text_index} out of range."})
+
+        excerpt = args.get("text_excerpt", "")
+        if not excerpt and texts and text_index < len(texts):
+            excerpt = texts[text_index][start:end]
+
+        assignment_id = "asgn_" + uuid.uuid4().hex[:8]
+        now = datetime.now(timezone.utc).isoformat()
+        assignment = {
+            "assignment_id": assignment_id,
+            "code_id": code_id,
+            "coder_id": coder_id,
+            "text_index": text_index,
+            "start": start,
+            "end": end,
+            "text_excerpt": excerpt,
+            "created_at": now,
+        }
+        proj["assignments"].append(assignment)
+        proj["modified_at"] = now
+        self._persist(project_id)
+
+        result = {"assignment_id": assignment_id, "assignment": assignment}
+        return self._final(args, result, "coding_assign_code")
+
+    def add_memo(self, args: dict) -> str:
+        project_id = args.get("project_id", "")
+        if project_id not in self._projects:
+            return _json({"error": f"Project '{project_id}' not found."})
+        proj = self._projects[project_id]
+        tree: CodingTree = proj["tree"]
+
+        code_id = args.get("code_id", "")
+        content = args.get("content", "")
+
+        if not code_id:
+            return _json({"error": "code_id is required."})
+        if not content:
+            return _json({"error": "content is required."})
+        if tree.get_node(code_id) is None:
+            return _json({"error": f"Code node '{code_id}' not found."})
+
+        memo_id = "memo_" + uuid.uuid4().hex[:8]
+        now = datetime.now(timezone.utc).isoformat()
+        memo = {"memo_id": memo_id, "content": content, "created_at": now}
+        if code_id not in proj["memos"]:
+            proj["memos"][code_id] = []
+        proj["memos"][code_id].append(memo)
+        proj["modified_at"] = now
+        self._persist(project_id)
+
+        result = {"memo_id": memo_id, "code_id": code_id, "memo": memo}
+        return self._final(args, result, "coding_add_memo")
+
+    def reliability_report(self, args: dict) -> str:
+        project_id = args.get("project_id", "")
+        if project_id not in self._projects:
+            return _json({"error": f"Project '{project_id}' not found."})
+        proj = self._projects[project_id]
+
+        coder1_id = args.get("coder1_id", "")
+        coder2_id = args.get("coder2_id", "")
+        if not coder1_id or not coder2_id:
+            return _json({"error": "coder1_id and coder2_id are required."})
+
+        assignments = proj.get("assignments", [])
+        a1 = [a for a in assignments if a["coder_id"] == coder1_id]
+        a2 = [a for a in assignments if a["coder_id"] == coder2_id]
+
+        if not a1 or not a2:
+            return _json({"error": "Both coders must have at least one assignment."})
+
+        unit_type = str(args.get("unit_type", "segment")).lower()
+
+        if unit_type == "segment":
+            all_units: Set[Tuple[int, int, int]] = set()
+            for a in a1 + a2:
+                all_units.add((a["text_index"], a["start"], a["end"]))
+            c1_map: Dict[Tuple, List[str]] = defaultdict(list)
+            c2_map: Dict[Tuple, List[str]] = defaultdict(list)
+            for a in a1:
+                c1_map[(a["text_index"], a["start"], a["end"])].append(a["code_id"])
+            for a in a2:
+                c2_map[(a["text_index"], a["start"], a["end"])].append(a["code_id"])
+
+            units_sorted = sorted(all_units)
+            agreements = 0
+            total = 0
+            c1_labels: List[str] = []
+            c2_labels: List[str] = []
+
+            for unit in units_sorted:
+                codes1 = set(c1_map.get(unit, []))
+                codes2 = set(c2_map.get(unit, []))
+                label1 = codes1.pop() if codes1 else "NONE"
+                label2 = codes2.pop() if codes2 else "NONE"
+                c1_labels.append(label1)
+                c2_labels.append(label2)
+                if label1 == label2:
+                    agreements += 1
+                total += 1
+
+            if total == 0:
+                return _json({"error": "No comparable units found."})
+
+            po = agreements / total
+            c1_dist = Counter(c1_labels)
+            c2_dist = Counter(c2_labels)
+            categories = sorted(set(c1_labels) | set(c2_labels))
+            n = len(c1_labels)
+            pe = sum(
+                (c1_dist.get(cat, 0) / n) * (c2_dist.get(cat, 0) / n)
+                for cat in categories
+            )
+            if pe == 1.0:
+                kappa = 1.0
+            else:
+                kappa = (po - pe) / (1.0 - pe)
+
+            cat_idx = {cat: i for i, cat in enumerate(categories)}
+            k = len(categories)
+            matrix = [[0] * k for _ in range(k)]
+            for a, b in zip(c1_labels, c2_labels):
+                matrix[cat_idx[a]][cat_idx[b]] += 1
+
+            code_freq: Dict[str, int] = Counter()
+            for a in assignments:
+                code_freq[a["code_id"]] += 1
+
+            cross_tab: Dict[str, Dict[str, int]] = {}
+            for a in a1:
+                unit = (a["text_index"], a["start"], a["end"])
+                codes2_for_unit = set(c2_map.get(unit, []))
+                c1_code = a["code_id"]
+                if c1_code not in cross_tab:
+                    cross_tab[c1_code] = {}
+                for c2_code in codes2_for_unit:
+                    cross_tab[c1_code][c2_code] = cross_tab[c1_code].get(c2_code, 0) + 1
+
+        else:
+            texts = proj.get("texts", [])
+            all_text_indices = set(range(len(texts))) if texts else set()
+            for a in assignments:
+                all_text_indices.add(a["text_index"])
+
+            c1_by_text: Dict[int, List[str]] = defaultdict(list)
+            c2_by_text: Dict[int, List[str]] = defaultdict(list)
+            for a in a1:
+                c1_by_text[a["text_index"]].append(a["code_id"])
+            for a in a2:
+                c2_by_text[a["text_index"]].append(a["code_id"])
+
+            c1_labels = []
+            c2_labels = []
+            for ti in sorted(all_text_indices):
+                codes1 = sorted(set(c1_by_text.get(ti, [])))
+                codes2 = sorted(set(c2_by_text.get(ti, [])))
+                label1 = codes1[0] if codes1 else "NONE"
+                label2 = codes2[0] if codes2 else "NONE"
+                c1_labels.append(label1)
+                c2_labels.append(label2)
+
+            n = len(c1_labels)
+            if n == 0:
+                return _json({"error": "No comparable text units found."})
+
+            agreements = sum(1 for a, b in zip(c1_labels, c2_labels) if a == b)
+            po = agreements / n
+            c1_dist = Counter(c1_labels)
+            c2_dist = Counter(c2_labels)
+            categories = sorted(set(c1_labels) | set(c2_labels))
+            pe = sum(
+                (c1_dist.get(cat, 0) / n) * (c2_dist.get(cat, 0) / n)
+                for cat in categories
+            )
+            kappa = (po - pe) / (1.0 - pe) if pe != 1.0 else 1.0
+
+            cat_idx = {cat: i for i, cat in enumerate(categories)}
+            k = len(categories)
+            matrix = [[0] * k for _ in range(k)]
+            for a, b in zip(c1_labels, c2_labels):
+                matrix[cat_idx[a]][cat_idx[b]] += 1
+
+            code_freq = Counter(a["code_id"] for a in assignments)
+            cross_tab = {}
+            units_sorted = sorted(all_text_indices)
+
+        if kappa < 0:
+            kappa_interp = "poor"
+        elif kappa < 0.20:
+            kappa_interp = "slight"
+        elif kappa < 0.40:
+            kappa_interp = "fair"
+        elif kappa < 0.60:
+            kappa_interp = "moderate"
+        elif kappa < 0.80:
+            kappa_interp = "substantial"
+        else:
+            kappa_interp = "almost perfect"
+
+        result = {
+            "kappa": round(kappa, 4),
+            "kappa_interpretation": kappa_interp,
+            "agreement_rate": round(po, 4),
+            "expected_agreement": round(pe, 4),
+            "n_units": n if unit_type == "text" else len(units_sorted),
+            "confusion_matrix": matrix,
+            "categories": categories,
+            "code_frequencies": dict(code_freq),
+            "cross_tabulation": cross_tab,
+            "coder1_id": coder1_id,
+            "coder2_id": coder2_id,
+            "unit_type": unit_type,
+        }
+        return self._final(args, result, "coding_reliability_report")
+
+    def saturation_curve(self, args: dict) -> str:
+        project_id = args.get("project_id", "")
+        if project_id not in self._projects:
+            return _json({"error": f"Project '{project_id}' not found."})
+        proj = self._projects[project_id]
+
+        assignments = list(proj.get("assignments", []))
+        coder_id = args.get("coder_id")
+        if coder_id:
+            assignments = [a for a in assignments if a["coder_id"] == coder_id]
+
+        if not assignments:
+            return _json({"error": "No assignments found for the specified criteria."})
+
+        unit_type = str(args.get("unit_type", "assignment")).lower()
+
+        if unit_type == "assignment":
+            sorted_assignments = sorted(assignments, key=lambda a: a.get("created_at", ""))
+            seen_codes: Set[str] = set()
+            curve: List[Dict[str, Any]] = []
+
+            for i, a in enumerate(sorted_assignments):
+                code_id = a["code_id"]
+                is_new = code_id not in seen_codes
+                seen_codes.add(code_id)
+                n_cumulative = len(seen_codes)
+                n_new = 1 if is_new else 0
+                marginal = n_new / (i + 1) if (i + 1) > 0 else 0
+                curve.append({
+                    "unit": i + 1,
+                    "assignment_id": a["assignment_id"],
+                    "code_id": code_id,
+                    "cumulative_codes": n_cumulative,
+                    "new_codes": n_new,
+                    "marginal_rate": round(marginal, 4),
+                })
+        else:
+            text_codes: Dict[int, List[str]] = defaultdict(list)
+            for a in assignments:
+                text_codes[a["text_index"]].append(a["code_id"])
+            sorted_texts = sorted(text_codes.keys())
+            seen_codes = set()
+            curve = []
+            for i, ti in enumerate(sorted_texts):
+                codes_for_text = text_codes[ti]
+                n_new = 0
+                for c in codes_for_text:
+                    if c not in seen_codes:
+                        n_new += 1
+                        seen_codes.add(c)
+                n_cumulative = len(seen_codes)
+                marginal = n_new / (i + 1) if (i + 1) > 0 else 0
+                curve.append({
+                    "unit": i + 1,
+                    "text_index": ti,
+                    "cumulative_codes": n_cumulative,
+                    "new_codes": n_new,
+                    "marginal_rate": round(marginal, 4),
+                })
+
+        if len(curve) >= 2:
+            first_half_avg = sum(c["marginal_rate"] for c in curve[:len(curve) // 2]) / max(1, len(curve) // 2)
+            second_half_avg = sum(c["marginal_rate"] for c in curve[len(curve) // 2:]) / max(1, len(curve) - len(curve) // 2)
+            trend = "decreasing" if second_half_avg < first_half_avg else "flat/increasing"
+        else:
+            trend = "insufficient data"
+
+        result = {
+            "curve": curve,
+            "total_unique_codes": len(seen_codes),
+            "total_units": len(curve),
+            "trend": trend,
+            "unit_type": unit_type,
+        }
+        return self._final(args, result, "coding_saturation_curve")
+
+    def get_tree(self, args: dict) -> str:
+        project_id = args.get("project_id", "")
+        if project_id not in self._projects:
+            return _json({"error": f"Project '{project_id}' not found."})
+        tree: CodingTree = self._projects[project_id]["tree"]
+        result = {"project_id": project_id, "tree": tree.to_tree()}
+        return self._final(args, result, "coding_get_tree")
+
+    def list_projects(self, args: dict) -> str:
+        summaries = []
+        for pid, proj in self._projects.items():
+            summaries.append({
+                "project_id": pid,
+                "project_name": proj.get("project_name", ""),
+                "n_texts": len(proj.get("texts", [])),
+                "n_assignments": len(proj.get("assignments", [])),
+                "n_nodes": len(proj["tree"].list_nodes()),
+                "created_at": proj.get("created_at", ""),
+            })
+        return _json({"projects": summaries})
+
+    def load_project(self, args: dict) -> str:
+        project_id = args.get("project_id", "")
+        workspace = args.get("workspace", "")
+        if not project_id or not workspace:
+            return _json({"error": "project_id and workspace are required."})
+        data = self._load_from_disk(project_id, workspace)
+        if data is None:
+            return _json({"error": f"Project '{project_id}' not found on disk."})
+        tree: CodingTree = data["tree"]
+        result = {
+            "project_id": project_id,
+            "project_name": data.get("project_name", ""),
+            "n_texts": len(data.get("texts", [])),
+            "n_nodes": len(tree.list_nodes()),
+            "n_assignments": len(data.get("assignments", [])),
+            "n_memos": sum(len(v) for v in data.get("memos", {}).values()),
+        }
+        return self._final(args, result, "coding_load_project")

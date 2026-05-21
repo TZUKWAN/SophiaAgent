@@ -28,6 +28,9 @@ class DummyAgent:
     def run(self, prompt):
         return f"answered: {prompt}"
 
+    def run_mcp(self, prompt):
+        return self.run(prompt)
+
 
 def test_mcp_tools_include_sophia_ask_first():
     tools = cli._mcp_tools_for_agent(DummyAgent())
