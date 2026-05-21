@@ -869,13 +869,20 @@ def _call_mcp_tool(agent: SophiaAgent, name: str, arguments: Dict[str, Any]) -> 
         prompt = str(arguments.get("prompt", "")).strip()
         if not prompt:
             return {"error": "sophia_ask requires a non-empty prompt"}
-        return {"response": agent.run(prompt), "tool": name}
+        try:
+            result = agent.run_mcp(prompt)
+            return {"response": result, "tool": name}
+        except Exception as e:
+            return {"error": f"{type(e).__name__}: {e}", "tool": name}
 
-    result_str = agent.tools.dispatch(name, arguments)
     try:
-        return json.loads(result_str)
-    except json.JSONDecodeError:
-        return {"text": result_str}
+        result_str = agent.tools.dispatch(name, arguments)
+        try:
+            return json.loads(result_str)
+        except json.JSONDecodeError:
+            return {"text": result_str}
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {e}"}
 
 
 def _mcp_prompts_list() -> List[Dict[str, Any]]:
@@ -1179,6 +1186,11 @@ def _serve_stdio(args):
     def _handle_tools_call(params):
         name = params.get("name", "")
         arguments = params.get("arguments", {})
+        # For sophia_ask, send progress notification so client doesn't timeout
+        if name == MCP_SOPHIA_ASK_TOOL["name"]:
+            _send({"jsonrpc": "2.0", "method": "notifications/progress",
+                   "params": {"progressToken": params.get("_meta", {}).get("progressToken", 0),
+                              "progress": 0, "total": 1}})
         result_data = _call_mcp_tool(agent, name, arguments)
         return {
             "content": [{"type": "text", "text": json.dumps(result_data, ensure_ascii=False)}],

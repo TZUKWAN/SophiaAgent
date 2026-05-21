@@ -647,6 +647,33 @@ class SophiaAgent:
         )
         return self._append_generated_document_path(user_message, final_text)
 
+    def run_mcp(self, user_message: str) -> str:
+        """Lightweight run for MCP tool calls: no swarm, max 10 turns, fast tools only."""
+        system_prompt = build_system_prompt(self.workspace)
+        messages: List[Dict[str, Any]] = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ]
+        messages = self.autopilot.before_run(user_message, messages)
+        messages = self.context_compressor.maybe_compress(messages)
+
+        fast_tools = [
+            t for t in self.tools.list_tools()
+            if not t.startswith("doc_") or t in ("doc_list", "doc_get", "doc_outline")
+        ]
+        tool_schemas = self.tools.get_schemas() or None
+
+        for turn in range(10):
+            response = self.provider.chat(messages=messages, tools=tool_schemas)
+            messages.append(response.to_dict())
+            if not response.tool_calls:
+                return response.content or ""
+            for tc in response.tool_calls:
+                result = self.tools.dispatch(tc.name, tc.arguments)
+                messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+
+        return messages[-1].get("content", "") if messages else ""
+
     def chat(
         self,
         user_message: str,
