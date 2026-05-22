@@ -20,7 +20,9 @@ class JournalDatabase:
 
     def __init__(self, data_path: Optional[str] = None):
         self._journals: List[Dict[str, Any]] = []
+        self._cas_zones: Dict[str, Dict] = {}
         self._load_data(data_path)
+        self._load_cas_zones()
 
     # ------------------------------------------------------------------
     # Data loading
@@ -39,6 +41,24 @@ class JournalDatabase:
         except Exception as exc:
             logger.warning("Failed to load journal data: %s", exc)
             self._journals = []
+
+    def _load_cas_zones(self, cas_path: Optional[str] = None) -> None:
+        if cas_path is None:
+            base = Path(__file__).parent / "data"
+            cas_path = base / "cas_zones.json"
+        try:
+            with open(cas_path, "r", encoding="utf-8") as f:
+                self._cas_zones = json.load(f)
+        except FileNotFoundError:
+            logger.warning("CAS zones data not found at %s; using built-in defaults", cas_path)
+            self._cas_zones = {
+                "Nature": {"zone": 1, "issn": "0028-0836", "category": "综合性期刊", "top_journal": True, "impact_factor": 64.8},
+                "Science": {"zone": 1, "issn": "0036-8075", "category": "综合性期刊", "top_journal": True, "impact_factor": 56.9},
+                "Cell": {"zone": 1, "issn": "0092-8674", "category": "生物学", "top_journal": True, "impact_factor": 45.5},
+            }
+        except Exception as exc:
+            logger.warning("Failed to load CAS zones data: %s", exc)
+            self._cas_zones = {}
 
     # ------------------------------------------------------------------
     # J-1: Search and match
@@ -249,4 +269,70 @@ class JournalDatabase:
         for journal in self._journals:
             if journal.get("id") == journal_id:
                 return journal
+        return None
+
+    # ------------------------------------------------------------------
+    # ISSN / name lookup
+    # ------------------------------------------------------------------
+
+    def find_by_issn(self, issn: str) -> Optional[Dict[str, Any]]:
+        """Find a journal by exact ISSN or eISSN match."""
+        issn = issn.strip()
+        for journal in self._journals:
+            if journal.get("issn") == issn or journal.get("eissn") == issn:
+                return journal
+        return None
+
+    def find_by_name(self, name: str, fuzzy: bool = True) -> List[Dict[str, Any]]:
+        """Find journals by name.
+
+        Args:
+            name: The name string to search for.
+            fuzzy: If True, partial matching against name_cn or name_en.
+                   If False, exact match only.
+        """
+        name_lower = name.lower()
+        results = []
+        for journal in self._journals:
+            name_cn = journal.get("name_cn", "")
+            name_en = journal.get("name_en", "")
+            if fuzzy:
+                if name_lower in name_cn.lower() or name_lower in name_en.lower():
+                    results.append(journal)
+            else:
+                if name == name_cn or name == name_en:
+                    results.append(journal)
+        return results
+
+    # ------------------------------------------------------------------
+    # CAS zone lookup
+    # ------------------------------------------------------------------
+
+    def get_cas_zone(self, journal_name_or_issn: str) -> Optional[Dict]:
+        """Query the CAS (Chinese Academy of Sciences) zone for a journal.
+
+        Looks up by journal name first, then falls back to ISSN matching
+        across all entries in _cas_zones.
+
+        Returns a dict like:
+            {"zone": 1, "category": "计算机科学", "top_journal": True}
+        or None if not found.
+        """
+        query = journal_name_or_issn.strip()
+
+        # Direct name key lookup
+        if query in self._cas_zones:
+            return self._cas_zones[query]
+
+        # Case-insensitive name lookup
+        query_lower = query.lower()
+        for name, info in self._cas_zones.items():
+            if name.lower() == query_lower:
+                return info
+
+        # ISSN / eISSN lookup across all entries
+        for name, info in self._cas_zones.items():
+            if info.get("issn") == query or info.get("eissn") == query:
+                return info
+
         return None

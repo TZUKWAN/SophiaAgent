@@ -1,6 +1,6 @@
 """Literature search tool for SophiaAgent.
 
-Integrates: Semantic Scholar API, arXiv API, Crossref API.
+Integrates: Semantic Scholar API, arXiv API, Crossref API, CNKI (via Playwright).
 """
 
 import json
@@ -11,6 +11,12 @@ from html.parser import HTMLParser
 from typing import Any, Dict, List, Tuple
 
 import httpx
+
+try:
+    from playwright.sync_api import sync_playwright, TimeoutError as PWTimeoutError
+    HAS_PLAYWRIGHT = True
+except ImportError:
+    HAS_PLAYWRIGHT = False
 
 logger = logging.getLogger(__name__)
 
@@ -233,6 +239,71 @@ def _search_crossref(query: str, max_results: int = 10) -> Tuple[List[Dict], str
         return [], f"crossref failed: {type(e).__name__}: {e}"
 
 
+def _search_cnki_playwright(query: str, max_results: int = 10) -> Tuple[List[Dict], str]:
+    """Search CNKI via browser automation (requires playwright).
+
+    Returns (results_list, error_str) consistent with other search functions.
+    """
+    if not HAS_PLAYWRIGHT:
+        return [], "playwright not installed: pip install playwright && playwright install chromium"
+
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page()
+
+            page.goto("https://kns.cnki.net/kns8s/defaultresult/index", timeout=30000)
+
+            # Fill search box and submit
+            page.fill("input#txt_SearchText", query)
+            page.click("input.search-btn")
+
+            # Wait for results
+            page.wait_for_selector(".result-table-list", timeout=15000)
+
+            results = []
+            rows = page.query_selector_all(".result-table-list tbody tr")
+
+            for row in rows[:max_results]:
+                title_el = row.query_selector(".name a")
+                author_el = row.query_selector(".author")
+                source_el = row.query_selector(".source")
+                year_el = row.query_selector(".year")
+                abstract_el = row.query_selector(".abstract")
+
+                title = title_el.inner_text().strip() if title_el else ""
+                authors = author_el.inner_text().strip() if author_el else ""
+                source = source_el.inner_text().strip() if source_el else ""
+                year_text = year_el.inner_text().strip() if year_el else ""
+                abstract = abstract_el.inner_text().strip() if abstract_el else ""
+
+                # Parse year to int if possible
+                year = None
+                if year_text and year_text.isdigit():
+                    year = int(year_text)
+
+                if title:
+                    results.append({
+                        "title": title,
+                        "authors": authors,
+                        "year": year,
+                        "abstract": abstract[:300],
+                        "url": "",
+                        "doi": "",
+                        "arxiv": "",
+                        "citations": None,
+                        "source": "cnki",
+                        "journal": source,
+                    })
+
+            browser.close()
+            return results, ""
+
+    except Exception as e:
+        logger.warning("CNKI playwright search failed: %s", e)
+        return [], f"cnki_playwright failed: {type(e).__name__}: {e}"
+
+
 def literature_search(args: Dict[str, Any]) -> str:
     """Search academic literature across multiple databases.
 
@@ -277,6 +348,15 @@ def literature_search(args: Dict[str, Any]) -> str:
                 all_results.append(r)
                 seen_titles.add(r["title"])
 
+    if "cnki" in sources:
+        results, warning = _search_cnki_playwright(query, max_results)
+        if warning:
+            warnings.append(warning)
+        for r in results:
+            if r["title"] not in seen_titles:
+                all_results.append(r)
+                seen_titles.add(r["title"])
+
     all_results = all_results[:max_results * 2]  # Allow some extra
 
     return json.dumps({
@@ -295,7 +375,7 @@ def register_research_tools(registry):
         description=(
             "Search academic literature across databases. "
             "Returns paper titles, authors, years, abstracts, and citation counts. "
-            "Sources: semantic_scholar, arxiv, crossref."
+            "Sources: semantic_scholar, arxiv, crossref, cnki (requires playwright)."
         ),
         parameters={
             "type": "object",
@@ -317,6 +397,7 @@ def register_research_tools(registry):
                             "semantic_scholar",
                             "arxiv",
                             "crossref",
+                            "cnki",
                         ],
                     },
                     "description": "Databases to search",

@@ -1086,6 +1086,208 @@ def cmd_integrate(args):
         sys.exit(exit_code)
 
 
+def cmd_init(args):
+    """Interactive setup wizard — write ~/.sophia-agent/config.yaml and .env."""
+    import yaml
+
+    console = Console()
+    console.print()
+    console.print(f"[bold color(214)]SophiaAgent Setup Wizard[/bold color(214)]")
+    console.print("[dim]Press Enter to accept defaults shown in brackets.[/dim]")
+    console.print()
+
+    # --- Provider ---
+    provider = input("Provider type (openai-compat / anthropic / openai) [openai-compat]: ").strip()
+    if not provider:
+        provider = "openai-compat"
+
+    # --- Base URL (only for openai-compat) ---
+    base_url = ""
+    if provider == "openai-compat":
+        base_url = input("Base URL (e.g. https://your-host/v1): ").strip()
+
+    # --- API Key ---
+    api_key = input("API Key: ").strip()
+
+    # --- Model name ---
+    default_model = {
+        "openai": "gpt-4o",
+        "anthropic": "claude-3-5-sonnet-20241022",
+        "openai-compat": "your-model-name",
+    }.get(provider, "your-model-name")
+    model_name = input(f"Model name [{default_model}]: ").strip()
+    if not model_name:
+        model_name = default_model
+
+    # --- Workspace ---
+    default_workspace = "~/SophiaWorkspace"
+    workspace_input = input(f"Workspace path [{default_workspace}]: ").strip()
+    workspace = workspace_input if workspace_input else default_workspace
+    workspace_expanded = str(Path(workspace).expanduser().resolve())
+
+    # --- Semantic Scholar (optional) ---
+    s2_key = input("Semantic Scholar API key (optional, Enter to skip): ").strip()
+
+    # --- Build config ---
+    from sophia.config import Config, ModelConfig, SessionConfig
+
+    config = Config()
+    config.model = ModelConfig(
+        provider=provider,
+        name=model_name,
+        base_url=base_url,
+        api_key="",  # stored in .env, not config.yaml
+        max_turns=50,
+    )
+    home = Path.home()
+    config.session.db_path = str(home / ".sophia-agent" / "sessions.db")
+    config.session.workspace = workspace_expanded
+
+    # --- Write config.yaml ---
+    config_dir = home / ".sophia-agent"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_path = config_dir / "config.yaml"
+
+    config_dict = config.to_dict()
+    # Use ${SOPHIA_API_KEY} placeholder in config, real value goes in .env
+    config_dict["model"]["api_key"] = "${SOPHIA_API_KEY}"
+    # Add semantic scholar key placeholder if provided
+    if s2_key:
+        config_dict["semantic_scholar_api_key"] = "${SEMANTIC_SCHOLAR_API_KEY}"
+
+    with open(config_path, "w", encoding="utf-8") as f:
+        yaml.dump(config_dict, f, default_flow_style=False, allow_unicode=True)
+
+    # --- Write .env ---
+    env_path = config_dir / ".env"
+    env_lines = [f"SOPHIA_API_KEY={api_key}\n"]
+    if s2_key:
+        env_lines.append(f"SEMANTIC_SCHOLAR_API_KEY={s2_key}\n")
+
+    with open(env_path, "w", encoding="utf-8") as f:
+        f.writelines(env_lines)
+
+    # --- Create workspace dir ---
+    Path(workspace_expanded).mkdir(parents=True, exist_ok=True)
+
+    console.print()
+    console.print(f"[bold color(107)]Setup complete![/bold color(107)]")
+    console.print(f"[dim]Config written to: {config_path}[/dim]")
+    console.print(f"[dim]API key written to: {env_path}[/dim]")
+    console.print(f"[dim]Workspace: {workspace_expanded}[/dim]")
+    console.print()
+    console.print("[color(214)]Run [bold]sophia chat[/bold] to start.[/color(214)]")
+    console.print()
+
+
+
+def cmd_init(args):
+    """Interactive setup wizard for SophiaAgent."""
+    import yaml
+    from pathlib import Path
+    
+    console = Console()
+    console.print(Panel.fit(
+        "[bold color(214)]SophiaAgent Setup Wizard[/]",
+        border_style="color(214)"
+    ))
+    
+    # Provider selection
+    provider_choices = ["openai-compat", "anthropic", "openai"]
+    console.print("
+[bold]1. Select LLM Provider:[/]")
+    for i, p in enumerate(provider_choices):
+        console.print(f"  [cyan]{i+1}[/]. {p}")
+    provider_idx = input(f"Enter choice (1-{len(provider_choices)}) [1]: ").strip()
+    try:
+        p_idx = int(provider_idx) - 1
+        if not (0 <= p_idx < len(provider_choices)):
+            p_idx = 0
+    except ValueError:
+        p_idx = 0
+    provider = provider_choices[p_idx]
+    
+    # Base URL (for openai-compat)
+    base_url = ""
+    if provider == "openai-compat":
+        console.print("
+[bold]2. API Base URL (e.g. https://api.deepseek.com/v1):[/]")
+        base_url = input("> ").strip()
+    
+    # API Key
+    console.print(f"
+[bold]3. API Key for {provider}:[/]")
+    api_key = input("> ").strip()
+    
+    # Model Name
+    console.print("
+[bold]4. Model Name (e.g. deepseek-chat, gpt-4o, claude-3-5-sonnet-20241022):[/]")
+    model_name = input("> ").strip()
+    
+    # Workspace
+    default_ws = str(Path.home() / "SophiaWorkspace")
+    console.print(f"
+[bold]5. Workspace Directory (default: {default_ws}):[/]")
+    workspace = input("> ").strip()
+    if not workspace:
+        workspace = default_ws
+        
+    # Semantic Scholar
+    console.print("
+[bold]6. Semantic Scholar API Key (optional, press Enter to skip):[/]")
+    scholar_key = input("> ").strip()
+    
+    # Save config
+    config = Config.create_default()
+    config.model.provider = provider
+    config.model.base_url = base_url
+    config.model.api_key = api_key
+    config.model.name = model_name
+    config.session.workspace = workspace
+    
+    config_dir = Path.home() / ".sophia-agent"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_path = config_dir / "config.yaml"
+    
+    # We update the dumped config
+    config_dict = config.to_dict()
+    if scholar_key:
+        # Assuming you may want to put keys in config if supported or just env
+        pass
+        
+    with open(config_path, "w", encoding="utf-8") as f:
+        yaml.dump(config_dict, f, default_flow_style=False, allow_unicode=True)
+        
+    # Write to local .env in the cwd
+    env_path = Path(".env")
+    env_lines = [
+        "# Auto-generated by sophia init"
+    ]
+    if provider == "openai":
+        env_lines.append(f"OPENAI_API_KEY={api_key}")
+        env_lines.append(f"SOPHIA_MODEL={model_name}")
+    elif provider == "anthropic":
+        env_lines.append(f"ANTHROPIC_API_KEY={api_key}")
+        env_lines.append(f"SOPHIA_MODEL={model_name}")
+    else:
+        env_lines.append(f"SOPHIA_BASE_URL={base_url}")
+        env_lines.append(f"SOPHIA_API_KEY={api_key}")
+        env_lines.append(f"SOPHIA_MODEL={model_name}")
+        
+    if scholar_key:
+        env_lines.append(f"SEMANTIC_SCHOLAR_API_KEY={scholar_key}")
+        
+    with open(env_path, "w", encoding="utf-8") as f:
+        f.write("
+".join(env_lines) + "
+")
+        
+    console.print("
+[bold color(107)]✓ Configuration successful![/]")
+    console.print(f"  Configuration saved to: [dim]{config_path}[/]")
+    console.print(f"  Environment variables saved to: [dim]{env_path.absolute()}[/]")
+    
+
 def cmd_doctor(args):
     """Run installation and runtime health checks."""
     from sophia.doctor import render_report, run_doctor
@@ -1336,7 +1538,13 @@ def main():
     )
     p_integrate.set_defaults(func=cmd_integrate)
 
-    p_doctor = subparsers.add_parser(
+    p_init = subparsers.add_parser("init", help="Interactive setup wizard")
+    p_init.set_defaults(func=cmd_init)
+
+p_init = subparsers.add_parser("init", help="Interactive setup wizard")
+    p_init.set_defaults(func=cmd_init)
+
+    p_doctor = subparsers.add_parser((
         "doctor",
         help="Check SophiaAgent installation, configuration, tools, and network",
     )

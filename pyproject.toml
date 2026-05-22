@@ -72,8 +72,9 @@ empirical-full = [
     "fairlearn>=0.10",
     "mapie>=0.9",
 ]
+browser = ["playwright>=1.40"]
 env = ["python-dotenv>=1.0"]
-all = ["sophia-agent[cli,web,analysis,export,citation,anthropic,nlp-cn,data,ml,advanced,empirical,env]"]
+all = ["sophia-agent[cli,web,analysis,export,citation,anthropic,nlp-cn,data,ml,advanced,empirical,env,browser]"]
 core = ["sophia-agent[cli,web,citation,env]"]
 dev = ["pytest>=8.0", "ruff>=0.5"]
 

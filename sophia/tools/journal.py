@@ -109,3 +109,40 @@ def register_journal_tools(registry: ToolRegistry) -> None:
             ensure_ascii=False,
         ),
     )
+
+    # --- journal_find_by_issn ---
+    registry.register(
+        name="journal_find_by_issn",
+        description="按 ISSN 精确查找期刊，支持 ISSN 和 eISSN。",
+        parameters={
+            "type": "object",
+            "properties": {
+                "issn": {"type": "string", "description": "期刊 ISSN 或 eISSN，例如 0028-0836"},
+            },
+            "required": ["issn"],
+        },
+        handler=lambda args: json.dumps(
+            db.find_by_issn(args.get("issn", "")),
+            ensure_ascii=False,
+        ),
+    )
+
+    # --- journal_cas_zone ---
+    registry.register(
+        name="journal_cas_zone",
+        description="查询期刊的中科院分区（CAS 分区），支持按期刊名称或 ISSN 查询。",
+        parameters={
+            "type": "object",
+            "properties": {
+                "name_or_issn": {
+                    "type": "string",
+                    "description": "期刊名称（如 Nature）或 ISSN（如 0028-0836）",
+                },
+            },
+            "required": ["name_or_issn"],
+        },
+        handler=lambda args: json.dumps(
+            db.get_cas_zone(args.get("name_or_issn", "")),
+            ensure_ascii=False,
+        ),
+    )

@@ -150,25 +150,34 @@ class Config:
     def create_default(cls) -> "Config":
         """Create a default config with auto-detected model settings.
 
-        Hardcoded defaults (from ModelConfig) are preserved unless env vars override them.
+        When no environment variables are set and no local LLM is detected,
+        model fields are left empty so that `sophia init` has a chance to
+        configure them interactively.  No error is raised here.
         """
         config = cls()
 
-        # Env overrides take precedence over hardcoded defaults
+        # Reset hardcoded defaults so an unconfigured install starts clean
+        config.model.name = ""
+        config.model.base_url = ""
+        config.model.api_key = ""
+
+        # Env overrides take precedence
         if os.environ.get("OPENAI_API_KEY"):
             config.model.provider = "openai"
-            config.model.name = os.environ.get("SOPHIA_MODEL", "gpt-4o-mini")
+            config.model.name = os.environ.get("SOPHIA_MODEL", "gpt-4o")
             config.model.base_url = "https://api.openai.com/v1"
             config.model.api_key = os.environ.get("OPENAI_API_KEY")
         elif os.environ.get("ANTHROPIC_API_KEY"):
             config.model.provider = "anthropic"
-            config.model.name = os.environ.get("SOPHIA_MODEL", "claude-3-haiku-20240307")
+            config.model.name = os.environ.get("SOPHIA_MODEL", "claude-3-5-sonnet-20241022")
             config.model.api_key = os.environ.get("ANTHROPIC_API_KEY")
         elif os.environ.get("SOPHIA_BASE_URL"):
+            config.model.provider = "openai-compat"
             config.model.base_url = os.environ["SOPHIA_BASE_URL"]
             config.model.api_key = os.environ.get("SOPHIA_API_KEY", "")
-            config.model.name = os.environ.get("SOPHIA_MODEL", config.model.name)
+            config.model.name = os.environ.get("SOPHIA_MODEL", "")
         elif cls._local_port_open("127.0.0.1", 11434):
+            config.model.provider = "openai-compat"
             config.model.base_url = "http://127.0.0.1:11434/v1"
             config.model.api_key = "ollama"
             config.model.name = os.environ.get("SOPHIA_MODEL", "llama3.1")
@@ -176,7 +185,10 @@ class Config:
         home = Path.home()
         config.session.db_path = str(home / ".sophia-agent" / "sessions.db")
         config.session.workspace = str(home / "SophiaWorkspace")
-        Path(config.session.workspace).mkdir(parents=True, exist_ok=True)
+        try:
+            Path(config.session.workspace).mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
 
         return config
 
